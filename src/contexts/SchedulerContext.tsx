@@ -1,11 +1,12 @@
 import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SAMPLE_STAFF, SAMPLE_SHIFTS } from '../types'
-import type { StaffMember, Shift } from '../types'
+import type { StaffMember, Shift, CalendarAssignment } from '../types'
 
 interface SchedulerContextValue {
   staff: StaffMember[]
   shifts: Shift[]
+  calendarAssignments: CalendarAssignment[]
   addStaff: (member: Omit<StaffMember, 'id'>) => void
   updateStaff: (id: string, updates: Partial<StaffMember>) => void
   removeStaff: (id: string) => void
@@ -14,6 +15,9 @@ interface SchedulerContextValue {
   getStaffById: (id: string) => StaffMember | undefined
   getShiftsForStaff: (staffId: string) => Shift[]
   getShiftsForDay: (day: string) => Shift[]
+  addCalendarAssignment: (staffId: string, date: string) => void
+  removeCalendarAssignment: (id: string) => void
+  getAssignmentsForDate: (date: string) => CalendarAssignment[]
 }
 
 const SchedulerContext = createContext<SchedulerContextValue | null>(null)
@@ -27,6 +31,7 @@ function newId(prefix: string) {
 export function SchedulerProvider({ children }: { children: ReactNode }) {
   const [staff, setStaff] = useState<StaffMember[]>(SAMPLE_STAFF)
   const [shifts, setShifts] = useState<Shift[]>(SAMPLE_SHIFTS)
+  const [calendarAssignments, setCalendarAssignments] = useState<CalendarAssignment[]>([])
 
   function addStaff(member: Omit<StaffMember, 'id'>) {
     setStaff(prev => [...prev, { ...member, id: newId('s') }])
@@ -61,12 +66,30 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     return shifts.filter(s => s.day === day)
   }
 
+  function addCalendarAssignment(staffId: string, date: string) {
+    // Prevent duplicates for regular staff (allow multiple needs-coverage)
+    if (staffId !== 'needs-coverage') {
+      const alreadyExists = calendarAssignments.some(a => a.staffId === staffId && a.date === date)
+      if (alreadyExists) return
+    }
+    setCalendarAssignments(prev => [...prev, { id: newId('ca'), staffId, date }])
+  }
+
+  function removeCalendarAssignment(id: string) {
+    setCalendarAssignments(prev => prev.filter(a => a.id !== id))
+  }
+
+  function getAssignmentsForDate(date: string) {
+    return calendarAssignments.filter(a => a.date === date)
+  }
+
   return (
     <SchedulerContext.Provider value={{
-      staff, shifts,
+      staff, shifts, calendarAssignments,
       addStaff, updateStaff, removeStaff,
       addShift, removeShift,
       getStaffById, getShiftsForStaff, getShiftsForDay,
+      addCalendarAssignment, removeCalendarAssignment, getAssignmentsForDate,
     }}>
       {children}
     </SchedulerContext.Provider>

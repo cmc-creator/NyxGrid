@@ -421,7 +421,7 @@ body {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -687,4 +687,123 @@ body {
 .btn-accent, .btn-ghost, .theme-tile, .stat-card, .staff-badge,
 .sidebar-item, .theme-tile-dot, .staff-color-swatch, .shift-block {
   transition: all 0.2s ease;
+}
+
+/* ─── Month Calendar ──────────────────────────────────────── */
+.calendar-cell {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 6px 6px;
+  min-height: 84px;
+  transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  overflow: hidden;
+}
+.calendar-cell:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+.calendar-cell.drag-over {
+  border-color: var(--accent);
+  background-color: rgba(var(--accent-rgb, 124,58,237), 0.1);
+  box-shadow: 0 0 0 2px var(--accent), 0 4px 16px var(--accent-glow);
+}
+.calendar-cell.today-cell {
+  border-color: var(--accent);
+}
+
+.today-badge {
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ─── Calendar Chips ─────────────────────────────────────── */
+.cal-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.12s ease, transform 0.1s ease;
+}
+.cal-chip:hover {
+  opacity: 0.7;
+  transform: scale(0.97);
+}
+.needs-coverage-chip {
+  background: rgba(239,68,68,0.15) !important;
+  border-left: 3px solid #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+/* Small triangle for calendar chips */
+.cal-triangle {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid #ef4444;
+  flex-shrink: 0;
+}
+
+/* ─── Staff Roster Drag Panel ─────────────────────────────── */
+.roster-drag-item {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: grab;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.roster-drag-item:hover {
+  border-color: var(--border-strong);
+  background-color: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.roster-drag-item:active {
+  cursor: grabbing;
+  transform: scale(0.97);
+}
+
+/* Needs Coverage special drag item */
+.roster-drag-item.needs-coverage-drag {
+  border-color: rgba(239,68,68,0.3);
+  background-color: rgba(239,68,68,0.06);
+}
+.roster-drag-item.needs-coverage-drag:hover {
+  border-color: #ef4444;
+  background-color: rgba(239,68,68,0.12);
+  box-shadow: 0 4px 12px rgba(239,68,68,0.2);
+}
+
+/* CSS red triangle for the "Needs Coverage" badge */
+.needs-coverage-triangle {
+  width: 0;
+  height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 19px solid #ef4444;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(239,68,68,0.5));
 }

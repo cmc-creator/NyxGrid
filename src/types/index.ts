@@ -112,6 +112,14 @@ export interface Shift {
   note?: string
 }
 
+// ─── Calendar Assignment (monthly drag-and-drop) ──────────────
+// staffId can be a real staff id OR 'needs-coverage' for the red triangle marker
+export interface CalendarAssignment {
+  id: string
+  staffId: string
+  date: string // ISO 'YYYY-MM-DD'
+}
+
 // ─── Sample Data ──────────────────────────────────────────────
 export const SAMPLE_STAFF: StaffMember[] = [
   { id: 's1', name: 'Alex Rivera',    role: 'Manager',        department: 'Management', color: '#8b5cf6', status: 'active',   hoursPerWeek: 40, email: 'alex@nyxgrid.io'   },
