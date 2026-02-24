@@ -96,7 +96,7 @@ function AddShiftModal({ day, onClose }: AddShiftModalProps) {
 }
 
 export default function Schedule() {
-  const { staff, shifts, getStaffById, removeShift } = useScheduler()
+  const { staff, shifts, removeShift } = useScheduler()
   const [addModal, setAddModal] = useState<WeekDay | null>(null)
 
   // Get unique staff that appear in shifts
