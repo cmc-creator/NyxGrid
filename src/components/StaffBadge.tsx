@@ -1,4 +1,4 @@
-import { Phone, Mail, Clock, MoreVertical, CheckCircle, AlertCircle, Coffee } from 'lucide-react'
+import { Mail, Clock, MoreVertical, CheckCircle, AlertCircle, Coffee } from 'lucide-react'
 import { STAFF_COLORS } from '../types'
 import type { StaffMember } from '../types'
 import { useScheduler } from '../contexts/SchedulerContext'

@@ -181,7 +181,7 @@ function EditModal({ member, onClose }: EditModalProps) {
 
 export default function Staff() {
   const { staff } = useScheduler()
-  const [editTarget, setEditTarget] = useState<StaffMember | null | 'new'>('new' as unknown as null)
+  const [editTarget, setEditTarget] = useState<StaffMember | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [filterDept, setFilterDept] = useState('All')
