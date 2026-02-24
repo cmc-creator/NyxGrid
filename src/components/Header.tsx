@@ -1,12 +1,13 @@
-import { Bell, Palette } from 'lucide-react'
+import { Bell, Palette, Heart } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 
 interface HeaderProps {
   title: string
   onOpenThemes: () => void
+  onOpenKudos: () => void
 }
 
-export default function Header({ title, onOpenThemes }: HeaderProps) {
+export default function Header({ title, onOpenThemes, onOpenKudos }: HeaderProps) {
   const { theme } = useTheme()
 
   return (
@@ -21,6 +22,16 @@ export default function Header({ title, onOpenThemes }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Kudos button */}
+        <button
+          onClick={onOpenKudos}
+          className="btn-ghost flex items-center justify-center"
+          style={{ padding: 8 }}
+          title="Team Kudos Wall"
+        >
+          <Heart size={16} style={{ color: '#ec4899' }} />
+        </button>
+
         {/* Theme badge */}
         <button
           onClick={onOpenThemes}

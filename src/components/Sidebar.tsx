@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import {
   LayoutDashboard, Calendar, Users, Settings,
-  ChevronLeft, ChevronRight, Zap,
+  ChevronLeft, ChevronRight, Zap, FileText, MessageSquare,
 } from 'lucide-react'
+import { useReception } from '../contexts'
 
 interface NavItem {
   icon: React.ReactNode
@@ -19,11 +20,14 @@ const NAV_ITEMS: NavItem[] = [
   { icon: <LayoutDashboard size={18} />, label: 'Dashboard', page: 'dashboard' },
   { icon: <Calendar       size={18} />, label: 'Schedule',  page: 'schedule'  },
   { icon: <Users          size={18} />, label: 'Staff',     page: 'staff'     },
+  { icon: <FileText       size={18} />, label: 'Reports',   page: 'reports'   },
+  { icon: <MessageSquare  size={18} />, label: 'Chat',      page: 'chat'      },
   { icon: <Settings       size={18} />, label: 'Settings',  page: 'settings'  },
 ]
 
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const { triggerPanic } = useReception()
 
   return (
     <aside
@@ -69,11 +73,38 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
       {/* Collapse Toggle */}
       <button
         onClick={() => setCollapsed(c => !c)}
-        className="btn-ghost mx-2 mb-4 flex items-center justify-center"
+        className="btn-ghost mx-2 mb-2 flex items-center justify-center"
         style={{ padding: '8px', borderRadius: 8 }}
         title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+      </button>
+
+      {/* Panic / Emergency button */}
+      <button
+        onClick={triggerPanic}
+        title="Emergency Alert"
+        style={{
+          margin: '0 8px 12px',
+          padding: '10px',
+          borderRadius: 8,
+          border: '1px solid rgba(239,68,68,0.4)',
+          background: 'rgba(239,68,68,0.12)',
+          color: '#ef4444',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          gap: 8,
+          fontSize: 12,
+          fontWeight: 700,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.22)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.12)')}
+      >
+        <span style={{ fontSize: 14 }}>🚨</span>
+        {!collapsed && <span>Emergency</span>}
       </button>
     </aside>
   )

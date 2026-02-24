@@ -141,6 +141,68 @@ export const POSITIONS = [
   'Support',
 ]
 
+// ─── Reception Features ───────────────────────────────────────
+export interface Message {
+  id: string
+  text: string
+  user: string
+  createdAt: number
+}
+
+export interface ChecklistItem {
+  text: string
+  checked: boolean
+}
+
+export interface ShiftTemplate {
+  id: string
+  name: string
+  start: string
+  end: string
+}
+
+export interface ReportData {
+  [fieldId: string]: string
+}
+
+export interface Kudo {
+  id: number
+  from: string
+  to: string
+  message: string
+  timestamp: string
+}
+
+export interface Toast {
+  id: number
+  msg: string
+  type: 'info' | 'success' | 'error'
+}
+
+export const REPORT_FIELDS: { id: string; label: string; category: 'urgent' | 'important' | 'normal'; placeholder: string }[] = [
+  { id: 'incidents',   label: '🚨 Incidents / Alerts',  category: 'urgent',    placeholder: 'Any incidents, emergencies, or urgent matters...' },
+  { id: 'handoff',     label: '👋 Handoff Notes',       category: 'important', placeholder: 'Critical information for the next shift...' },
+  { id: 'maintenance', label: '🔧 Maintenance Issues',  category: 'important', placeholder: 'Equipment problems, repairs needed...' },
+  { id: 'mail',        label: '📦 Mail / Deliveries',   category: 'normal',    placeholder: 'Packages received, mail sorted...' },
+  { id: 'supplies',    label: '📋 Supplies',            category: 'normal',    placeholder: 'Inventory status, items restocked...' },
+  { id: 'lobby',       label: '🏢 Lobby Status',        category: 'normal',    placeholder: 'Cleanliness, organization, visitor notes...' },
+  { id: 'visitors',    label: '👥 Visitor Log',         category: 'normal',    placeholder: 'Notable visitors, meetings, appointments...' },
+  { id: 'notes',       label: '📝 General Notes',       category: 'normal',    placeholder: 'Other observations, tasks completed...' },
+]
+
+export const REPORT_TEMPLATES: { id: string; label: string; content: ReportData }[] = [
+  { id: 'quiet',    label: '😌 Quiet Shift',     content: { incidents: 'No incidents', handoff: 'Routine shift — no urgent items', maintenance: 'No issues', notes: 'Quiet, uneventful shift' } },
+  { id: 'busy',     label: '🔥 Busy Shift',      content: { handoff: 'Multiple activities — see notes', visitors: 'High visitor traffic', notes: 'Busy shift with increased activity' } },
+  { id: 'incident', label: '⚠️ Incident Report', content: { incidents: '[TIME] — [DESCRIPTION]\n[ACTION TAKEN]\n[FOLLOW-UP NEEDED]', handoff: 'Review incident notes above' } },
+]
+
+export const DEFAULT_SHIFT_TEMPLATES: ShiftTemplate[] = [
+  { id: 't1', name: 'Morning',   start: '07:00', end: '15:00' },
+  { id: 't2', name: 'Afternoon', start: '15:00', end: '23:00' },
+  { id: 't3', name: 'Full Day',  start: '08:00', end: '20:00' },
+  { id: 't4', name: 'Mid',       start: '10:00', end: '18:00' },
+]
+
 export const SAMPLE_SHIFTS: Shift[] = [
   { id: 'sh1',  staffId: 's1',  day: 'Mon', startTime: '09:00', endTime: '17:00', position: 'Open'    },
   { id: 'sh2',  staffId: 's1',  day: 'Tue', startTime: '09:00', endTime: '17:00', position: 'Open'    },
