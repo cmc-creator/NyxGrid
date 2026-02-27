@@ -314,10 +314,11 @@ function MonthView() {
                 const isToday = iso === todayIso
                 const isDragOver = dragOverDate === iso
                 const assignments = calendarAssignments.filter(a => a.date === iso)
+                const hasCoverage = assignments.some(a => a.staffId === 'needs-coverage')
                 return (
                   <div
                     key={di}
-                    className={`calendar-cell${isDragOver ? ' drag-over' : ''}${isToday ? ' today-cell' : ''}`}
+                    className={`calendar-cell${isDragOver ? ' drag-over' : ''}${isToday ? ' today-cell' : ''}${hasCoverage ? ' has-coverage' : ''}`}
                     style={{ opacity: isCurrentMonth ? 1 : 0.25 }}
                     onDragEnter={e => handleDragEnter(e, iso)}
                     onDragLeave={e => handleDragLeave(e, iso)}
@@ -335,7 +336,7 @@ function MonthView() {
                         <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontWeight: 600 }}>{assignments.length}</span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
                       {assignments.map(a => {
                         if (a.staffId === 'needs-coverage') {
                           return (
@@ -343,12 +344,12 @@ function MonthView() {
                               key={a.id} draggable
                               onDragStart={e => handleChipDragStart(e, a.id, a.staffId)}
                               onDragEnd={handleDragEnd}
-                              className="cal-chip needs-coverage-chip"
+                              className="coverage-full-chip"
                               onClick={() => removeCalendarAssignment(a.id)}
                               title="Drag to move · Click to remove"
                             >
-                              <span className="cal-triangle" />
-                              <span className="cal-chip-name">Coverage</span>
+                              <div className="coverage-full-triangle" />
+                              <span className="coverage-full-label">Needs Coverage</span>
                             </div>
                           )
                         }

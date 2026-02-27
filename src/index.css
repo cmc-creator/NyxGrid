@@ -690,14 +690,35 @@ body {
 }
 
 /* ─── Month Calendar ──────────────────────────────────────── */
+@keyframes coverage-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239,68,68,0.5);
+    border-color: #ef4444;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239,68,68,0.18), 0 0 20px rgba(239,68,68,0.25);
+    border-color: rgba(239,68,68,0.6);
+  }
+}
+@keyframes coverage-glow {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
 .calendar-cell {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 9px 8px 8px;
   min-height: 140px;
+  display: flex;
+  flex-direction: column;
   transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
   overflow: hidden;
+}
+.calendar-cell.has-coverage {
+  animation: coverage-pulse 1.8s ease-in-out infinite;
+  background: linear-gradient(160deg, rgba(239,68,68,0.07) 0%, var(--bg-card) 60%);
 }
 .calendar-cell:hover {
   background-color: var(--bg-hover);
@@ -766,6 +787,45 @@ body {
   background: rgba(239,68,68,0.15) !important;
   border-left: 3px solid #ef4444 !important;
   color: #ef4444 !important;
+}
+
+/* Full-cell needs-coverage block */
+.coverage-full-chip {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 6px;
+  border: 2px dashed rgba(239,68,68,0.6);
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+  cursor: grab;
+  animation: coverage-glow 1.8s ease-in-out infinite;
+  min-height: 72px;
+  margin-top: 2px;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+.coverage-full-chip:hover {
+  background: rgba(239,68,68,0.22);
+}
+.coverage-full-triangle {
+  width: 0;
+  height: 0;
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-bottom: 22px solid #ef4444;
+  filter: drop-shadow(0 0 6px rgba(239,68,68,0.7));
+}
+.coverage-full-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(239,68,68,0.5);
 }
 
 /* Small triangle for calendar chips */
