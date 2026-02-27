@@ -28,11 +28,11 @@ const ICON_PATHS = {
 /* ─── Feature data ────────────────────────────────────────── */
 const FEATURES = [
   { icon: 'calendar', title: 'Visual Month & Week Views',   desc: 'Switch between weekly and monthly layouts instantly. See every shift at a glance with colour-coded staff chips.' },
-  { icon: 'drag',     title: 'Drag & Drop Scheduling',      desc: 'Drag staff directly from the roster onto any day. Reschedule chips between dates — no forms, no friction.' },
-  { icon: 'bolt',     title: 'Real-Time Sync',              desc: 'Powered by Firebase Firestore. Every change appears instantly across every device and browser — no refresh needed.' },
+  { icon: 'drag',     title: 'Drag & Drop Scheduling',      desc: 'Drag staff directly from the roster onto any day. Reschedule chips between dates with no forms, no friction.' },
+  { icon: 'bolt',     title: 'Real-Time Sync',              desc: 'Powered by Firebase Firestore. Every change appears instantly across every device and browser, no refresh needed.' },
   { icon: 'alert',    title: 'Needs Coverage Alerts',       desc: 'Mark any day as needing coverage with a vivid pulsing alert. Staff can see exactly where help is required.' },
   { icon: 'users',    title: 'Full Staff Management',       desc: 'Add, edit, and organise your entire team. Track positions, contact details, shift patterns, and employment type.' },
-  { icon: 'palette',  title: '8 Custom Themes',             desc: 'Choose from eight carefully crafted colour themes — from midnight dark to clean light — to match your vibe.' },
+  { icon: 'palette',  title: '8 Custom Themes',             desc: 'Choose from eight carefully crafted colour themes, from midnight dark to clean light, to match your vibe.' },
   { icon: 'message',  title: 'Team Chat',                   desc: 'Built-in messaging keeps your team connected without leaving the scheduler. Announcements, DMs, and more.' },
   { icon: 'trophy',   title: 'Kudos Wall',                  desc: 'Recognise great work publicly. Send kudos to teammates on a shared wall for everyone to celebrate.' },
 ]
@@ -182,6 +182,7 @@ export default function LandingPage() {
         }} />
 
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
+          <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 100, width: 'auto', display: 'block', margin: '0 auto 32px', filter: 'drop-shadow(0 0 28px #8b5cf6)' }} />
           <div style={{
             display: 'inline-block',
             padding: '5px 16px',
@@ -195,7 +196,7 @@ export default function LandingPage() {
             textTransform: 'uppercase',
             marginBottom: 28,
           }}>
-            <Icon d={ICON_PATHS.sparkle} size={12} stroke="#a78bfa" /> Staff Scheduling, Evolved
+            Staff Scheduling, Evolved
           </div>
 
           <h1 style={{
@@ -224,7 +225,7 @@ export default function LandingPage() {
             margin: '0 auto 44px',
           }}>
             NyxGrid is a real-time staff scheduling platform built for speed.
-            Drag, drop, and done — shifts organised in seconds, synced everywhere instantly.
+            Drag, drop, and done. Shifts organised in seconds, synced everywhere instantly.
           </p>
 
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -268,7 +269,7 @@ export default function LandingPage() {
           }}>
             {[
               { value: '8', label: 'Colour Themes' },
-              { value: '∞', label: 'Staff Members' },
+              { value: '10', label: 'Free Staff Slots' },
               { value: 'Live', label: 'Real-Time Sync' },
               { value: '0s', label: 'Setup Time' },
             ].map((s, i) => (
@@ -361,6 +362,8 @@ export default function LandingPage() {
           <h2 style={sectionH2}>Everything you need to run your team</h2>
           <p style={sectionSub}>
             Built for managers who don't have time to fight with software.
+          </p>
+          <p style={{ ...sectionSub, marginTop: 10 }}>
             NyxGrid gets out of your way and lets you schedule.
           </p>
         </div>
@@ -375,6 +378,7 @@ export default function LandingPage() {
               border: '1px solid rgba(255,255,255,0.07)',
               borderRadius: 16,
               padding: '28px 24px',
+              textAlign: 'center',
               transition: 'border-color 0.2s, transform 0.2s',
               cursor: 'default',
             }}
@@ -388,7 +392,7 @@ export default function LandingPage() {
             }}
             >
               <div style={{
-                width: 40, height: 40, borderRadius: 10, marginBottom: 16,
+                width: 40, height: 40, borderRadius: 10, margin: '0 auto 16px',
                 background: 'rgba(139,92,246,0.12)',
                 border: '1px solid rgba(139,92,246,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -413,7 +417,7 @@ export default function LandingPage() {
           {[
             { n: '01', title: 'Add your staff', desc: 'Enter your team members, their positions, contact info, and shift templates once.' },
             { n: '02', title: 'Drag to schedule', desc: 'Open the calendar. Drag names from the roster panel onto the days they\'re working.' },
-            { n: '03', title: 'Share instantly', desc: 'Everyone with access sees changes live — no exports, no emails, no spreadsheets.' },
+            { n: '03', title: 'Share instantly', desc: 'Everyone with access sees changes live. No exports, no emails, no spreadsheets.' },
           ].map((s, i) => (
             <div key={i} style={{
               display: 'flex', flexDirection: 'column', gap: 16,
@@ -559,8 +563,8 @@ export default function LandingPage() {
           borderRadius: 24, padding: '60px 40px',
           boxShadow: '0 0 60px rgba(139,92,246,0.1)',
         }}>
-          <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 64, width: 'auto', marginBottom: 16, filter: 'drop-shadow(0 0 16px #8b5cf6)' }} />
-          <h2 style={{ margin: '0 0 12px', fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: '#fff' }}>
+          <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 90, width: 'auto', display: 'block', margin: '0 auto 24px', filter: 'drop-shadow(0 0 24px #8b5cf6)' }} />
+          <h2 style={{ margin: '0 0 12px', fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: '#fff', textAlign: 'center' }}>
             Ready to get organised?
           </h2>
           <p style={{ margin: '0 0 32px', fontSize: 15, color: '#64748b', lineHeight: 1.6 }}>
@@ -591,13 +595,12 @@ export default function LandingPage() {
         flexWrap: 'wrap', gap: 12,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 24, width: 'auto', opacity: 0.85 }} />
           <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.03em', color: '#fff' }}>
-            Nyx<span style={{ color: '#8b5cf6' }}>Grid</span>
+            Nyx<span style={{ color: '#8b5cf6' }}>Grid</span>™
           </span>
         </div>
-        <div style={{ fontSize: 12, color: '#334155' }}>
-          © {new Date().getFullYear()} NyxGrid · Built with Firebase & React
+        <div style={{ fontSize: 12, color: '#334155', textAlign: 'center' }}>
+          NyxGrid™ is a trademark of NyxCollective LLC. &copy; {new Date().getFullYear()} NyxCollective LLC. All rights reserved.
         </div>
         <button
           onClick={handleSignIn}
