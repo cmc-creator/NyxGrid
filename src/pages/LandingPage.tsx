@@ -73,6 +73,8 @@ const PRICING = [
       'Staff availability settings',
       'PDF & CSV export',
       'All 8 themes',
+      '✦ AI shift suggestions',
+      '✦ AI coverage gap detection',
       'Priority email support',
     ],
     cta: 'Start 14-Day Trial',
@@ -85,6 +87,9 @@ const PRICING = [
     accent: '#ec4899',
     features: [
       'Everything in Pro',
+      '✦ AI schedule optimisation',
+      '✦ AI demand forecasting',
+      '✦ AI-generated shift reports',
       'Unlimited locations',
       'Custom branding & logo',
       'Role-based access control',
@@ -478,12 +483,30 @@ export default function LandingPage() {
 
               {/* features */}
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-                {tier.features.map((f, j) => (
-                  <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: '#94a3b8' }}>
-                    <span style={{ color: tier.accent, fontSize: 15, lineHeight: 1, marginTop: 1, flexShrink: 0 }}>✓</span>
-                    {f}
-                  </li>
-                ))}
+                {tier.features.map((f, j) => {
+                  const isAI = f.startsWith('✦')
+                  const label = isAI ? f.slice(2) : f
+                  return (
+                    <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: isAI ? '#e2e8f0' : '#94a3b8', fontWeight: isAI ? 600 : 400 }}>
+                      <span style={{ fontSize: 14, lineHeight: 1, marginTop: 1, flexShrink: 0, color: isAI ? '#a78bfa' : tier.accent }}>
+                        {isAI ? '✦' : '✓'}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                        {label}
+                        {isAI && (
+                          <span style={{
+                            fontSize: 9, fontWeight: 800, letterSpacing: '0.07em',
+                            padding: '2px 7px', borderRadius: 99,
+                            background: 'linear-gradient(90deg, rgba(139,92,246,0.35), rgba(99,102,241,0.25))',
+                            border: '1px solid rgba(139,92,246,0.4)',
+                            color: '#a78bfa',
+                            textTransform: 'uppercase',
+                          }}>AI</span>
+                        )}
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
 
               {/* CTA */}
