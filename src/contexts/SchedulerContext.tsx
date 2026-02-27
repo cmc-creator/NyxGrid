@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
+import {
+  collection, doc, addDoc, updateDoc, deleteDoc,
+  onSnapshot, getDocs, writeBatch,
+} from 'firebase/firestore'
+import { db } from '../firebase'
+import { SAMPLE_STAFF, SAMPLE_SHIFTS } from '../types'
 import type { StaffMember, Shift, CalendarAssignment } from '../types'
 
 interface SchedulerContextValue {
@@ -22,78 +28,90 @@ interface SchedulerContextValue {
 
 const SchedulerContext = createContext<SchedulerContextValue | null>(null)
 
-const API = '/api'
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-  if (!res.ok) throw new Error(`API error ${res.status} on ${path}`)
-  return res.json()
-}
-
 export function SchedulerProvider({ children }: { children: ReactNode }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [shifts, setShifts] = useState<Shift[]>([])
   const [calendarAssignments, setCalendarAssignments] = useState<CalendarAssignment[]>([])
   const [loading, setLoading] = useState(true)
 
-  // ── Load all data on mount ──────────────────────────────────
   useEffect(() => {
-    Promise.all([
-      apiFetch('/staff'),
-      apiFetch('/shifts'),
-      apiFetch('/calendar-assignments'),
-    ])
-      .then(([s, sh, ca]) => {
-        setStaff(s)
-        setShifts(sh)
-        setCalendarAssignments(ca)
+    let unsubStaff: (() => void) | undefined
+    let unsubShifts: (() => void) | undefined
+    let unsubCal: (() => void) | undefined
+
+    async function init() {
+      // Seed sample data on first ever load
+      const snap = await getDocs(collection(db, 'staff'))
+      if (snap.empty) {
+        const batch = writeBatch(db)
+        for (const s of SAMPLE_STAFF) {
+          batch.set(doc(db, 'staff', s.id), s)
+        }
+        for (const sh of SAMPLE_SHIFTS) {
+          batch.set(doc(db, 'shifts', sh.id), sh)
+        }
+        await batch.commit()
+      }
+
+      // Track which collections have loaded their first snapshot
+      const loaded = new Set<string>()
+      const checkLoaded = (col: string) => {
+        loaded.add(col)
+        if (loaded.size >= 3) setLoading(false)
+      }
+
+      unsubStaff = onSnapshot(collection(db, 'staff'), s => {
+        setStaff(s.docs.map(d => ({ id: d.id, ...d.data() } as StaffMember)))
+        checkLoaded('staff')
       })
-      .catch(err => console.error('Failed to load data from API:', err))
-      .finally(() => setLoading(false))
+      unsubShifts = onSnapshot(collection(db, 'shifts'), s => {
+        setShifts(s.docs.map(d => ({ id: d.id, ...d.data() } as Shift)))
+        checkLoaded('shifts')
+      })
+      unsubCal = onSnapshot(collection(db, 'calendarAssignments'), s => {
+        setCalendarAssignments(s.docs.map(d => ({ id: d.id, ...d.data() } as CalendarAssignment)))
+        checkLoaded('calendarAssignments')
+      })
+    }
+
+    init().catch(err => {
+      console.error('Firebase init error:', err)
+      setLoading(false)
+    })
+
+    return () => {
+      unsubStaff?.()
+      unsubShifts?.()
+      unsubCal?.()
+    }
   }, [])
 
   // ── Staff ───────────────────────────────────────────────────
   function addStaff(member: Omit<StaffMember, 'id'>) {
-    const tempId = `tmp_${Date.now()}`
-    setStaff(prev => [...prev, { ...member, id: tempId }])
-    apiFetch('/staff', { method: 'POST', body: JSON.stringify(member) })
-      .then(saved => setStaff(prev => prev.map(m => m.id === tempId ? saved : m)))
-      .catch(() => setStaff(prev => prev.filter(m => m.id !== tempId)))
+    addDoc(collection(db, 'staff'), member).catch(console.error)
   }
 
   function updateStaff(id: string, updates: Partial<StaffMember>) {
-    setStaff(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m))
-    const current = staff.find(m => m.id === id)
-    if (!current) return
-    apiFetch(`/staff/${id}`, { method: 'PUT', body: JSON.stringify({ ...current, ...updates }) })
-      .catch(() => setStaff(prev => prev.map(m => m.id === id ? current : m))) // rollback
+    updateDoc(doc(db, 'staff', id), updates as Record<string, unknown>).catch(console.error)
   }
 
   function removeStaff(id: string) {
-    const prev_staff = staff
-    const prev_shifts = shifts
-    setStaff(prev => prev.filter(m => m.id !== id))
-    setShifts(prev => prev.filter(s => s.staffId !== id))
-    apiFetch(`/staff/${id}`, { method: 'DELETE' })
-      .catch(() => { setStaff(prev_staff); setShifts(prev_shifts) })
+    deleteDoc(doc(db, 'staff', id)).catch(console.error)
+    shifts.filter(s => s.staffId === id).forEach(s =>
+      deleteDoc(doc(db, 'shifts', s.id)).catch(console.error)
+    )
+    calendarAssignments.filter(a => a.staffId === id).forEach(a =>
+      deleteDoc(doc(db, 'calendarAssignments', a.id)).catch(console.error)
+    )
   }
 
   // ── Shifts ──────────────────────────────────────────────────
   function addShift(shift: Omit<Shift, 'id'>) {
-    const tempId = `tmp_${Date.now()}`
-    setShifts(prev => [...prev, { ...shift, id: tempId }])
-    apiFetch('/shifts', { method: 'POST', body: JSON.stringify(shift) })
-      .then(saved => setShifts(prev => prev.map(s => s.id === tempId ? saved : s)))
-      .catch(() => setShifts(prev => prev.filter(s => s.id !== tempId)))
+    addDoc(collection(db, 'shifts'), shift).catch(console.error)
   }
 
   function removeShift(id: string) {
-    setShifts(prev => prev.filter(s => s.id !== id))
-    apiFetch(`/shifts/${id}`, { method: 'DELETE' })
-      .catch(() => apiFetch('/shifts').then(setShifts)) // re-sync on failure
+    deleteDoc(doc(db, 'shifts', id)).catch(console.error)
   }
 
   // ── Calendar Assignments ────────────────────────────────────
@@ -101,17 +119,11 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     if (staffId !== 'needs-coverage') {
       if (calendarAssignments.some(a => a.staffId === staffId && a.date === date)) return
     }
-    const tempId = `tmp_${Date.now()}`
-    setCalendarAssignments(prev => [...prev, { id: tempId, staffId, date }])
-    apiFetch('/calendar-assignments', { method: 'POST', body: JSON.stringify({ staffId, date }) })
-      .then(saved => setCalendarAssignments(prev => prev.map(a => a.id === tempId ? saved : a)))
-      .catch(() => setCalendarAssignments(prev => prev.filter(a => a.id !== tempId)))
+    addDoc(collection(db, 'calendarAssignments'), { staffId, date }).catch(console.error)
   }
 
   function removeCalendarAssignment(id: string) {
-    setCalendarAssignments(prev => prev.filter(a => a.id !== id))
-    apiFetch(`/calendar-assignments/${id}`, { method: 'DELETE' })
-      .catch(() => apiFetch('/calendar-assignments').then(setCalendarAssignments))
+    deleteDoc(doc(db, 'calendarAssignments', id)).catch(console.error)
   }
 
   // ── Derived queries ─────────────────────────────────────────
