@@ -136,7 +136,6 @@ export default function LandingPage() {
         height: 64,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 72, width: 'auto', filter: 'drop-shadow(0 0 12px #8b5cf6)' }} />
           <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff' }}>
             Nyx<span style={{ color: '#8b5cf6' }}>Grid</span>
           </span>
@@ -182,7 +181,7 @@ export default function LandingPage() {
         }} />
 
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
-          <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 280, width: 'auto', display: 'block', margin: '0 auto 40px', filter: 'drop-shadow(0 0 60px #8b5cf6)' }} />
+          <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 400, width: 'auto', display: 'block', margin: '0 auto 40px', filter: 'drop-shadow(0 0 80px #8b5cf6)' }} />
           <div style={{
             display: 'inline-block',
             padding: '5px 16px',
