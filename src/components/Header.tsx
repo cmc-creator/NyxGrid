@@ -1,5 +1,6 @@
-import { Bell, Palette, Heart } from 'lucide-react'
+import { Bell, Palette, Heart, LogOut } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
+import { useAuth } from '../contexts/AuthContext'
 
 interface HeaderProps {
   title: string
@@ -9,6 +10,7 @@ interface HeaderProps {
 
 export default function Header({ title, onOpenThemes, onOpenKudos }: HeaderProps) {
   const { theme } = useTheme()
+  const { user, signOut } = useAuth()
 
   return (
     <header
@@ -59,6 +61,40 @@ export default function Header({ title, onOpenThemes, onOpenKudos }: HeaderProps
             }}
           />
         </button>
+
+        {/* User avatar + sign out */}
+        {user && (
+          <div className="flex items-center gap-2" style={{ marginLeft: 4 }}>
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={user.displayName ?? 'User'}
+                title={user.displayName ?? user.email ?? ''}
+                style={{ width: 30, height: 30, borderRadius: '50%', border: '2px solid var(--accent)' }}
+              />
+            ) : (
+              <div
+                title={user.displayName ?? user.email ?? ''}
+                style={{
+                  width: 30, height: 30, borderRadius: '50%',
+                  background: 'var(--accent)', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: 13, fontWeight: 700,
+                  color: '#fff',
+                }}
+              >
+                {(user.displayName ?? user.email ?? '?')[0].toUpperCase()}
+              </div>
+            )}
+            <button
+              onClick={signOut}
+              className="btn-ghost flex items-center justify-center"
+              style={{ padding: 8 }}
+              title="Sign out"
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )

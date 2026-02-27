@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { SchedulerProvider } from './contexts/SchedulerContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ReceptionProvider } from './contexts/ReceptionContext'
@@ -16,6 +17,7 @@ import Staff from './pages/Staff'
 import Reports from './pages/Reports'
 import Chat from './pages/Chat'
 import Settings from './pages/Settings'
+import Login from './pages/Login'
 
 type Page = 'dashboard' | 'schedule' | 'staff' | 'reports' | 'chat' | 'settings'
 
@@ -29,6 +31,7 @@ const PAGE_TITLES: Record<Page, string> = {
 }
 
 function AppContent() {
+  const { user, loading } = useAuth()
   const [page, setPage] = useState<Page>('dashboard')
   const [showThemes, setShowThemes] = useState(false)
   const [showKudos, setShowKudos] = useState(false)
@@ -43,6 +46,17 @@ function AppContent() {
       case 'settings':  return <Settings />
     }
   }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+        <div style={{ fontSize: 36, animation: 'spin 1s linear infinite', filter: 'drop-shadow(0 0 10px var(--accent))' }}>🔮</div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
+  }
+
+  if (!user) return <Login />
 
   return (
     <div className="flex h-full" style={{ background: 'var(--bg-primary)' }}>
@@ -72,13 +86,15 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <SchedulerProvider>
-        <ToastProvider>
-          <ReceptionProvider>
-            <AppContent />
-          </ReceptionProvider>
-        </ToastProvider>
-      </SchedulerProvider>
+      <AuthProvider>
+        <SchedulerProvider>
+          <ToastProvider>
+            <ReceptionProvider>
+              <AppContent />
+            </ReceptionProvider>
+          </ToastProvider>
+        </SchedulerProvider>
+      </AuthProvider>
     </ThemeProvider>
   )
 }
