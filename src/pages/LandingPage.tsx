@@ -155,7 +155,7 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────────── */}
       <section style={{
-        padding: '100px 40px 80px',
+        padding: '40px 40px 80px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
@@ -181,7 +181,7 @@ export default function LandingPage() {
         }} />
 
         <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
-          <img src="/gridlogo.png" alt="NyxGrid" style={{ width: 500, height: 'auto', display: 'block', margin: '0 auto 40px', objectFit: 'contain', filter: 'drop-shadow(0 0 80px #8b5cf6)' }} />
+          <img src="/gridlogo.png" alt="NyxGrid" style={{ width: 650, height: 'auto', display: 'block', margin: '0 auto 40px', objectFit: 'contain', filter: 'drop-shadow(0 0 80px #8b5cf6)' }} />
           <div style={{
             display: 'inline-block',
             padding: '5px 16px',
@@ -562,7 +562,7 @@ export default function LandingPage() {
           borderRadius: 24, padding: '60px 40px',
           boxShadow: '0 0 60px rgba(139,92,246,0.1)',
         }}>
-          <img src="/gridlogo.png" alt="NyxGrid" style={{ width: 420, height: 'auto', display: 'block', margin: '0 auto 32px', objectFit: 'contain', filter: 'drop-shadow(0 0 50px #8b5cf6)' }} />
+          <img src="/gridlogo.png" alt="NyxGrid" style={{ width: 520, height: 'auto', display: 'block', margin: '0 auto 32px', objectFit: 'contain', filter: 'drop-shadow(0 0 50px #8b5cf6)' }} />
           <h2 style={{ margin: '0 0 12px', fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: '#fff', textAlign: 'center' }}>
             Ready to get organised?
           </h2>
