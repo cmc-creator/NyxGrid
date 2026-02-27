@@ -368,7 +368,7 @@ export default function LandingPage() {
         </div>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 20,
         }}>
           {FEATURES.map((f, i) => (
@@ -376,7 +376,7 @@ export default function LandingPage() {
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.07)',
               borderRadius: 16,
-              padding: '28px 24px',
+              padding: '32px 28px',
               textAlign: 'center',
               transition: 'border-color 0.2s, transform 0.2s',
               cursor: 'default',
