@@ -17,7 +17,7 @@ import Staff from './pages/Staff'
 import Reports from './pages/Reports'
 import Chat from './pages/Chat'
 import Settings from './pages/Settings'
-import Login from './pages/Login'
+import LandingPage from './pages/LandingPage'
 
 type Page = 'dashboard' | 'schedule' | 'staff' | 'reports' | 'chat' | 'settings'
 
@@ -56,7 +56,7 @@ function AppContent() {
     )
   }
 
-  if (!user) return <Login />
+  if (!user) return <LandingPage />
 
   return (
     <div className="flex h-full" style={{ background: 'var(--bg-primary)' }}>
