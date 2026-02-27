@@ -50,7 +50,7 @@ function AppContent() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-        <div style={{ fontSize: 36, animation: 'spin 1s linear infinite', filter: 'drop-shadow(0 0 10px var(--accent))' }}>🔮</div>
+        <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 48, width: 'auto', animation: 'spin 1s linear infinite', filter: 'drop-shadow(0 0 10px var(--accent))' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )

@@ -51,12 +51,11 @@ export default function Login() {
         <div style={{ textAlign: 'center' }}>
           <div
             style={{
-              fontSize: 48,
               marginBottom: 8,
               filter: 'drop-shadow(0 0 12px var(--accent))',
             }}
           >
-            🔮
+            <img src="/gridlogo.png" alt="NyxGrid" style={{ height: 64, width: 'auto' }} />
           </div>
           <h1
             style={{
