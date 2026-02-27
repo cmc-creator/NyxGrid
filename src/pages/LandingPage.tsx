@@ -419,8 +419,9 @@ export default function LandingPage() {
             { n: '03', title: 'Share instantly', desc: 'Everyone with access sees changes live. No exports, no emails, no spreadsheets.' },
           ].map((s, i) => (
             <div key={i} style={{
-              display: 'flex', flexDirection: 'column', gap: 16,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
               padding: '0 36px',
+              textAlign: 'center',
               borderRight: i < 2 ? '1px solid rgba(255,255,255,0.07)' : 'none',
             }}>
               <div style={{
