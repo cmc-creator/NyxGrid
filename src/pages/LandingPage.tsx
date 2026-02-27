@@ -355,7 +355,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ────────────────────────────────────────── */}
-      <section id="features" style={{ padding: '80px 40px', maxWidth: 1100, margin: '0 auto' }}>
+      <section id="features" style={{ padding: '80px 40px', maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <div style={sectionBadge}>Features</div>
           <h2 style={sectionH2}>Everything you need to run your team</h2>
