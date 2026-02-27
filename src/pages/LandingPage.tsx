@@ -1,47 +1,40 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
+/* ─── SVG Icon helper ─────────────────────────────────────── */
+function Icon({ d, size = 20, stroke = 'currentColor' }: { d: string; size?: number; stroke?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d={d} />
+    </svg>
+  )
+}
+
+const ICON_PATHS = {
+  calendar:   'M8 2v3M16 2v3M3.5 9.09h17M21 8.5V17c0 3-1.5 5-5 5H8c-3.5 0-5-2-5-5V8.5c0-3 1.5-5 5-5h8c3.5 0 5 2 5 5z',
+  drag:       'M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18',
+  bolt:       'M13 2 3 14h9l-1 8 10-12h-9l1-8z',
+  alert:      'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01',
+  users:      'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  palette:    'M12 2C6.49 2 2 6.49 2 12c0 5.52 4.49 10 10 10a2.5 2.5 0 0 0 2.5-2.5c0-.61-.23-1.2-.64-1.67-.09-.11-.13-.2-.13-.32 0-.25.2-.46.46-.46H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9z',
+  message:    'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+  trophy:     'M18 2H6v7a6 6 0 0 0 12 0V2zM6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22',
+  arrowRight: 'M5 12h14M12 5l7 7-7 7',
+  check:      'M20 6 9 17l-5-5',
+  sparkle:    'M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z',
+  launch:     'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z',
+}
+
+/* ─── Feature data ────────────────────────────────────────── */
 const FEATURES = [
-  {
-    icon: '🗓️',
-    title: 'Visual Month & Week Views',
-    desc: 'Switch between weekly and monthly calendar layouts instantly. See every shift at a glance with color-coded staff chips.',
-  },
-  {
-    icon: '🖱️',
-    title: 'Drag & Drop Scheduling',
-    desc: 'Drag staff directly from the roster onto any day. Reschedule by dragging chips between dates — no forms, no friction.',
-  },
-  {
-    icon: '⚡',
-    title: 'Real-Time Sync',
-    desc: 'Powered by Firebase Firestore. Every change appears instantly across every device and browser — no refresh needed.',
-  },
-  {
-    icon: '🚨',
-    title: 'Needs Coverage Alerts',
-    desc: 'Mark any day as needing coverage with a vivid pulsing alert block. Staff can see exactly where help is required.',
-  },
-  {
-    icon: '👥',
-    title: 'Full Staff Management',
-    desc: 'Add, edit, and organise your entire team. Track positions, contact details, shift patterns, and employment type.',
-  },
-  {
-    icon: '🎨',
-    title: '8 Custom Themes',
-    desc: 'Choose from eight carefully crafted colour themes — from midnight dark to clean light — to match your workspace vibe.',
-  },
-  {
-    icon: '💬',
-    title: 'Team Chat',
-    desc: 'Built-in messaging keeps your team connected without leaving the scheduler. Announcements, DMs, and more.',
-  },
-  {
-    icon: '🏆',
-    title: 'Kudos Wall',
-    desc: 'Recognise great work publicly. Send kudos to teammates that appear on a shared wall for everyone to celebrate.',
-  },
+  { icon: 'calendar', title: 'Visual Month & Week Views',   desc: 'Switch between weekly and monthly layouts instantly. See every shift at a glance with colour-coded staff chips.' },
+  { icon: 'drag',     title: 'Drag & Drop Scheduling',      desc: 'Drag staff directly from the roster onto any day. Reschedule chips between dates — no forms, no friction.' },
+  { icon: 'bolt',     title: 'Real-Time Sync',              desc: 'Powered by Firebase Firestore. Every change appears instantly across every device and browser — no refresh needed.' },
+  { icon: 'alert',    title: 'Needs Coverage Alerts',       desc: 'Mark any day as needing coverage with a vivid pulsing alert. Staff can see exactly where help is required.' },
+  { icon: 'users',    title: 'Full Staff Management',       desc: 'Add, edit, and organise your entire team. Track positions, contact details, shift patterns, and employment type.' },
+  { icon: 'palette',  title: '8 Custom Themes',             desc: 'Choose from eight carefully crafted colour themes — from midnight dark to clean light — to match your vibe.' },
+  { icon: 'message',  title: 'Team Chat',                   desc: 'Built-in messaging keeps your team connected without leaving the scheduler. Announcements, DMs, and more.' },
+  { icon: 'trophy',   title: 'Kudos Wall',                  desc: 'Recognise great work publicly. Send kudos to teammates on a shared wall for everyone to celebrate.' },
 ]
 
 const PRICING = [
@@ -123,7 +116,14 @@ export default function LandingPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#e2e8f0', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#080810', color: '#e2e8f0', fontFamily: 'system-ui, -apple-system, sans-serif', position: 'relative' }}>
+      {/* dot-grid background */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+        backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.08) 1px, transparent 1px)',
+        backgroundSize: '32px 32px',
+      }} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
       {/* ── NAV ─────────────────────────────────────────────── */}
       <nav style={{
@@ -195,7 +195,7 @@ export default function LandingPage() {
             textTransform: 'uppercase',
             marginBottom: 28,
           }}>
-            ✦ Staff Scheduling, Evolved
+            <Icon d={ICON_PATHS.sparkle} size={12} stroke="#a78bfa" /> Staff Scheduling, Evolved
           </div>
 
           <h1 style={{
@@ -239,7 +239,7 @@ export default function LandingPage() {
                 boxShadow: '0 0 32px rgba(139,92,246,0.35)',
               }}
             >
-              {busy ? 'Signing in…' : '🚀  Get Started Free'}
+              {busy ? 'Signing in…' : <><Icon d={ICON_PATHS.arrowRight} size={16} stroke="currentColor" /> Get Started Free</>}
             </button>
             <a href="#features" style={{
               display: 'inline-flex', alignItems: 'center',
@@ -312,7 +312,7 @@ export default function LandingPage() {
               display: 'flex', alignItems: 'center', paddingLeft: 10,
               fontSize: 11, color: '#475569',
             }}>
-              cmc-creator.github.io/NyxGrid/
+              nyxgrid.org
             </div>
           </div>
           {/* calendar grid preview */}
@@ -387,7 +387,15 @@ export default function LandingPage() {
               ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
             }}
             >
-              <div style={{ fontSize: 28, marginBottom: 14 }}>{f.icon}</div>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10, marginBottom: 16,
+                background: 'rgba(139,92,246,0.12)',
+                border: '1px solid rgba(139,92,246,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Icon d={ICON_PATHS[f.icon as keyof typeof ICON_PATHS]} size={18} stroke="#a78bfa" />
+              </div>
               <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>{f.title}</h3>
               <p style={{ margin: 0, fontSize: 13, color: '#64748b', lineHeight: 1.65 }}>{f.desc}</p>
             </div>
@@ -401,13 +409,17 @@ export default function LandingPage() {
           <div style={sectionBadge}>How It Works</div>
           <h2 style={sectionH2}>Scheduling in three steps</h2>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0 }}>
           {[
             { n: '01', title: 'Add your staff', desc: 'Enter your team members, their positions, contact info, and shift templates once.' },
             { n: '02', title: 'Drag to schedule', desc: 'Open the calendar. Drag names from the roster panel onto the days they\'re working.' },
             { n: '03', title: 'Share instantly', desc: 'Everyone with access sees changes live — no exports, no emails, no spreadsheets.' },
           ].map((s, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div key={i} style={{
+              display: 'flex', flexDirection: 'column', gap: 16,
+              padding: '0 36px',
+              borderRight: i < 2 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+            }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 12,
                 background: 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(99,102,241,0.15))',
@@ -566,7 +578,7 @@ export default function LandingPage() {
               boxShadow: '0 0 32px rgba(139,92,246,0.4)',
             }}
           >
-            {busy ? 'Signing in…' : '🚀  Launch NyxGrid'}
+            {busy ? 'Signing in…' : <><Icon d={ICON_PATHS.launch} size={16} stroke="currentColor" /> Launch NyxGrid</>}
           </button>
         </div>
       </section>
@@ -592,9 +604,10 @@ export default function LandingPage() {
           disabled={busy}
           style={{ ...navLinkStyle, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}
         >
-          Sign In →
+          Sign In <Icon d={ICON_PATHS.arrowRight} size={14} stroke="currentColor" />
         </button>
       </footer>
+      </div>
     </div>
   )
 }
