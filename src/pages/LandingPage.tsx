@@ -144,6 +144,7 @@ export default function LandingPage() {
           <a href="#features" style={navLinkStyle}>Features</a>
           <a href="#pricing" style={navLinkStyle}>Pricing</a>
           <button
+            type="button"
             onClick={handleSignIn}
             disabled={busy}
             style={ctaBtnStyle('#8b5cf6', busy)}
@@ -229,6 +230,7 @@ export default function LandingPage() {
 
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
+              type="button"
               onClick={handleSignIn}
               disabled={busy}
               style={{
@@ -527,6 +529,7 @@ export default function LandingPage() {
 
               {/* CTA */}
               <button
+                type="button"
                 onClick={tier.name === 'Enterprise' ? undefined : handleSignIn}
                 disabled={busy && tier.name !== 'Enterprise'}
                 style={{
@@ -572,6 +575,7 @@ export default function LandingPage() {
             No credit card required for the free tier.
           </p>
           <button
+            type="button"
             onClick={handleSignIn}
             disabled={busy}
             style={{
@@ -603,6 +607,7 @@ export default function LandingPage() {
           NyxGrid™ is a trademark of NyxCollective LLC. &copy; {new Date().getFullYear()} NyxCollective LLC. All rights reserved.
         </div>
         <button
+          type="button"
           onClick={handleSignIn}
           disabled={busy}
           style={{ ...navLinkStyle, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}
