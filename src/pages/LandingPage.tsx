@@ -606,14 +606,6 @@ export default function LandingPage() {
         <div style={{ fontSize: 12, color: '#334155', textAlign: 'center' }}>
           NyxGrid™ is a trademark of NyxCollective LLC. &copy; {new Date().getFullYear()} NyxCollective LLC. All rights reserved.
         </div>
-        <button
-          type="button"
-          onClick={handleSignIn}
-          disabled={busy}
-          style={{ ...navLinkStyle, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}
-        >
-          Sign In <Icon d={ICON_PATHS.arrowRight} size={14} stroke="currentColor" />
-        </button>
       </footer>
       </div>
     </div>
