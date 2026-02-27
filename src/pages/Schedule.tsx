@@ -33,10 +33,11 @@ function getMonthWeeks(year: number, month: number): Date[][] {
   }
   return weeks
 }
+
+const DOW_MAP: WeekDay[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DOW_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
-// --- Add Shift Modal ---------------------------------------------------
 interface AddShiftModalProps { day: WeekDay; onClose: () => void }
 function AddShiftModal({ day, onClose }: AddShiftModalProps) {
   const { staff, addShift } = useScheduler()
@@ -52,14 +53,14 @@ function AddShiftModal({ day, onClose }: AddShiftModalProps) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Add Shift  {day}</h2>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Add Shift &mdash; {day}</h2>
           <button className="btn-ghost" onClick={onClose} style={{ padding: 8 }}><X size={15} /></button>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Staff Member</label>
             <select className="themed-input rounded-lg px-3 py-2" value={staffId} onChange={e => setStaffId(e.target.value)}>
-              {staff.filter(s => s.status === 'active').map(m => <option key={m.id} value={m.id}>{m.name}  {m.role}</option>)}
+              {staff.filter(s => s.status === 'active').map(m => <option key={m.id} value={m.id}>{m.name} &mdash; {m.role}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -84,7 +85,6 @@ function AddShiftModal({ day, onClose }: AddShiftModalProps) {
     </div>
   )
 }
-
 // --- Week View ---------------------------------------------------------
 function WeekView() {
   const { staff, shifts, removeShift } = useScheduler()
@@ -111,7 +111,7 @@ function WeekView() {
                 <div className="schedule-row-label" style={{ borderRight: '2px solid var(--border)' }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: member.color, boxShadow: `0 0 6px rgba(${rgb}, 0.9)`, flexShrink: 0 }} />
                   <div style={{ width: 26, height: 26, borderRadius: '50%', background: `rgba(${rgb}, 0.18)`, color: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
-                    {member.name.split(' ').map(p => p[0]).join('').slice(0, 2)}
+                    {member.name.split(' ').map((p: string) => p[0]).join('').slice(0, 2)}
                   </div>
                   <div style={{ overflow: 'hidden' }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{member.name}</div>
@@ -125,7 +125,7 @@ function WeekView() {
                       {dayShifts.map(shift => (
                         <div key={shift.id} className="shift-block flex items-center justify-between" style={{ background: `rgba(${rgb}, 0.18)`, borderLeft: `3px solid ${member.color}`, color: member.color, marginBottom: 3 }} onClick={e => e.stopPropagation()}>
                           <div>
-                            <div style={{ fontSize: 10, fontWeight: 700 }}>{shift.startTime}{shift.endTime}</div>
+                            <div style={{ fontSize: 10, fontWeight: 700 }}>{shift.startTime}–{shift.endTime}</div>
                             <div style={{ fontSize: 9.5, opacity: 0.75, fontWeight: 500 }}>{shift.position}</div>
                           </div>
                           <button onClick={() => removeShift(shift.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 2, opacity: 0.6, borderRadius: 3 }}><Trash2 size={10} /></button>
@@ -146,14 +146,12 @@ function WeekView() {
 
 // --- Month View --------------------------------------------------------
 function MonthView() {
-  const { staff, calendarAssignments, addCalendarAssignment, removeCalendarAssignment } = useScheduler()
+  const { staff, shifts, calendarAssignments, addCalendarAssignment, removeCalendarAssignment } = useScheduler()
   const today = new Date()
   const [viewDate, setViewDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [dragOverDate, setDragOverDate] = useState<string | null>(null)
 
-  // Stores { staffId, assignmentId? }  assignmentId present when moving an existing chip
   const dragging = useRef<{ staffId: string; assignmentId?: string } | null>(null)
-  // Per-cell enter counters: count dragenter/dragleave to avoid flicker from child elements
   const enterCount = useRef<Record<string, number>>({})
 
   const year = viewDate.getFullYear()
@@ -163,6 +161,12 @@ function MonthView() {
 
   function prevMonth() { setViewDate(new Date(year, month - 1, 1)) }
   function nextMonth() { setViewDate(new Date(year, month + 1, 1)) }
+
+  // Look up recurring weekly shifts for a staff member on a specific calendar date
+  function getShiftsForDate(staffId: string, date: Date): Shift[] {
+    const dayOfWeek = DOW_MAP[date.getDay()]
+    return shifts.filter(s => s.staffId === staffId && s.day === dayOfWeek)
+  }
 
   function makeDragGhost(label: string, color: string) {
     const g = document.createElement('div')
@@ -178,7 +182,6 @@ function MonthView() {
     return g
   }
 
-  // Drag from left roster panel (add)
   function handleRosterDragStart(e: React.DragEvent, staffId: string) {
     dragging.current = { staffId }
     e.dataTransfer.setData('text/plain', staffId)
@@ -191,7 +194,6 @@ function MonthView() {
     setTimeout(() => document.body.removeChild(ghost), 0)
   }
 
-  // Drag an existing chip to MOVE it
   function handleChipDragStart(e: React.DragEvent, assignmentId: string, staffId: string) {
     e.stopPropagation()
     dragging.current = { staffId, assignmentId }
@@ -200,7 +202,7 @@ function MonthView() {
     const member = staff.find(m => m.id === staffId)
     const label = staffId === 'needs-coverage' ? 'Coverage' : (member?.name?.split(' ')[0] ?? staffId)
     const color = staffId === 'needs-coverage' ? '#ef4444' : (member?.color ?? '#7c3aed')
-    const ghost = makeDragGhost(`${label}`, color)
+    const ghost = makeDragGhost(label, color)
     e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, 20)
     setTimeout(() => document.body.removeChild(ghost), 0)
   }
@@ -235,12 +237,8 @@ function MonthView() {
     const current = dragging.current
     const staffId = current?.staffId ?? e.dataTransfer.getData('text/plain')
     if (!staffId) return
-    const targetIso = toIso(date)
-    // Moving existing chip: remove from source, then add to target
-    if (current?.assignmentId) {
-      removeCalendarAssignment(current.assignmentId)
-    }
-    addCalendarAssignment(staffId, targetIso)
+    if (current?.assignmentId) removeCalendarAssignment(current.assignmentId)
+    addCalendarAssignment(staffId, toIso(date))
     dragging.current = null
     enterCount.current = {}
     setDragOverDate(null)
@@ -252,14 +250,12 @@ function MonthView() {
     <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
 
       {/* Left roster panel */}
-      <div style={{ width: 176, flexShrink: 0, position: 'sticky', top: 0 }}>
+      <div style={{ width: 180, flexShrink: 0 }}>
         <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid var(--border)' }}>
           Drag to schedule
         </div>
         <div
-          draggable
-          onDragStart={e => handleRosterDragStart(e, 'needs-coverage')}
-          onDragEnd={handleDragEnd}
+          draggable onDragStart={e => handleRosterDragStart(e, 'needs-coverage')} onDragEnd={handleDragEnd}
           className="roster-drag-item needs-coverage-drag"
           title="Drag to mark a day as needing coverage"
         >
@@ -275,13 +271,11 @@ function MonthView() {
             const rgb = hexToRgb(member.color)
             return (
               <div
-                key={member.id}
-                draggable
-                onDragStart={e => handleRosterDragStart(e, member.id)}
-                onDragEnd={handleDragEnd}
+                key={member.id} draggable
+                onDragStart={e => handleRosterDragStart(e, member.id)} onDragEnd={handleDragEnd}
                 className="roster-drag-item"
                 style={{ '--staff-color': member.color, borderColor: `rgba(${rgb}, 0.35)` } as React.CSSProperties}
-                title={`${member.name}  drag to schedule`}
+                title={`${member.name} — drag to schedule`}
               >
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: `rgba(${rgb}, 0.18)`, border: `2px solid ${member.color}`, color: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
                   {member.name.split(' ').map((p: string) => p[0]).join('').slice(0, 2)}
@@ -298,19 +292,22 @@ function MonthView() {
 
       {/* Monthly calendar */}
       <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Month nav */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <button className="btn-ghost" onClick={prevMonth} style={{ padding: '6px 10px' }}><ChevronLeft size={16} /></button>
           <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)' }}>{MONTH_NAMES[month]} {year}</span>
           <button className="btn-ghost" onClick={nextMonth} style={{ padding: '6px 10px' }}><ChevronRight size={16} /></button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 3 }}>
+        {/* DOW headers */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
           {DOW_LABELS.map(d => (
             <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 0' }}>{d}</div>
           ))}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {/* Weeks */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {weeks.map((week, wi) => (
-            <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
+            <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
               {week.map((date, di) => {
                 const iso = toIso(date)
                 const isCurrentMonth = date.getMonth() === month
@@ -321,52 +318,63 @@ function MonthView() {
                   <div
                     key={di}
                     className={`calendar-cell${isDragOver ? ' drag-over' : ''}${isToday ? ' today-cell' : ''}`}
-                    style={{ opacity: isCurrentMonth ? 1 : 0.3 }}
+                    style={{ opacity: isCurrentMonth ? 1 : 0.25 }}
                     onDragEnter={e => handleDragEnter(e, iso)}
                     onDragLeave={e => handleDragLeave(e, iso)}
                     onDragOver={handleDragOver}
                     onDrop={e => handleDrop(e, date)}
                   >
-                    <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span className={isToday ? 'today-badge' : ''} style={{ fontSize: 12, fontWeight: isToday ? 800 : 600, color: isToday ? undefined : 'var(--text-secondary)' }}>
+                    <div style={{ marginBottom: 5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span
+                        className={isToday ? 'today-badge' : ''}
+                        style={{ fontSize: 13, fontWeight: isToday ? 800 : 600, color: isToday ? undefined : 'var(--text-secondary)' }}
+                      >
                         {date.getDate()}
                       </span>
                       {assignments.length > 0 && (
-                        <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600 }}>{assignments.length}</span>
+                        <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontWeight: 600 }}>{assignments.length}</span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                       {assignments.map(a => {
                         if (a.staffId === 'needs-coverage') {
                           return (
                             <div
-                              key={a.id}
-                              draggable
+                              key={a.id} draggable
                               onDragStart={e => handleChipDragStart(e, a.id, a.staffId)}
                               onDragEnd={handleDragEnd}
                               className="cal-chip needs-coverage-chip"
                               onClick={() => removeCalendarAssignment(a.id)}
-                              title="Drag to move day  Click to remove"
+                              title="Drag to move · Click to remove"
                             >
-                              <span className="cal-triangle" /><span>Coverage</span>
+                              <span className="cal-triangle" />
+                              <span className="cal-chip-name">Coverage</span>
                             </div>
                           )
                         }
                         const member = staff.find(m => m.id === a.staffId)
                         if (!member) return null
                         const rgb = hexToRgb(member.color)
+                        const dayShifts = getShiftsForDate(a.staffId, date)
                         return (
                           <div
-                            key={a.id}
-                            draggable
+                            key={a.id} draggable
                             onDragStart={e => handleChipDragStart(e, a.id, a.staffId)}
                             onDragEnd={handleDragEnd}
                             className="cal-chip"
                             style={{ background: `rgba(${rgb}, 0.18)`, borderLeft: `3px solid ${member.color}`, color: member.color, cursor: 'grab' }}
                             onClick={() => removeCalendarAssignment(a.id)}
-                            title={`${member.name}  drag to move  click to remove`}
+                            title={`${member.name} — drag to move · click to remove`}
                           >
-                            {member.name.split(' ')[0]}
+                            <span className="cal-chip-name">{member.name}</span>
+                            {dayShifts.length > 0 ? (
+                              <span className="cal-chip-time">
+                                {dayShifts[0].startTime}–{dayShifts[0].endTime}
+                                {dayShifts[0].position ? ` · ${dayShifts[0].position}` : ''}
+                              </span>
+                            ) : (
+                              <span className="cal-chip-time">{member.role}</span>
+                            )}
                           </div>
                         )
                       })}
@@ -378,7 +386,7 @@ function MonthView() {
           ))}
         </div>
         <div style={{ marginTop: 12, fontSize: 11.5, color: 'var(--text-muted)' }}>
-           Drag roster  day to add &nbsp;&nbsp; Drag chip  day to move &nbsp;&nbsp; Click chip to remove
+          💡 Drag roster → day to add &nbsp;·&nbsp; Drag chip → day to move &nbsp;·&nbsp; Click chip to remove
         </div>
       </div>
     </div>
