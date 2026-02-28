@@ -1,4 +1,4 @@
-import { Mail, Clock, MoreVertical, CheckCircle, AlertCircle, Coffee } from 'lucide-react'
+import { Phone, Mail, Clock, MoreVertical, CheckCircle, AlertCircle, Coffee } from 'lucide-react'
 import { STAFF_COLORS } from '../types'
 import type { StaffMember } from '../types'
 import { useScheduler } from '../contexts/SchedulerContext'
@@ -61,6 +61,9 @@ export default function StaffBadge({ member, onEdit, compact = false }: StaffBad
           style={{
             background: `rgba(${rgb}, 0.18)`,
             color: member.color,
+            width: 46,
+            height: 46,
+            fontSize: 17,
           }}
         >
           {getInitials(member.name)}
@@ -73,16 +76,16 @@ export default function StaffBadge({ member, onEdit, compact = false }: StaffBad
 
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {member.name}
           </div>
-          <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{member.role}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>{member.role}</div>
         </div>
 
         {/* Status dot */}
         <div
           style={{
-            width: 8, height: 8, borderRadius: '50%',
+            width: 9, height: 9, borderRadius: '50%',
             background: STATUS_COLOR[member.status],
             flexShrink: 0,
             boxShadow: `0 0 5px ${STATUS_COLOR[member.status]}`,
@@ -125,7 +128,7 @@ export default function StaffBadge({ member, onEdit, compact = false }: StaffBad
       {/* Main info */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="flex items-center gap-2">
-          <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
+          <span style={{ fontWeight: 700, fontSize: 15.5, color: 'var(--text-primary)' }}>
             {member.name}
           </span>
           {/* Status pill */}

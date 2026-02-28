@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
 /* ─── SVG Icon helper ─────────────────────────────────────── */
@@ -8,6 +8,11 @@ function Icon({ d, size = 20, stroke = 'currentColor' }: { d: string; size?: num
       <path d={d} />
     </svg>
   )
+}
+
+function hexToRgb(h: string) {
+  const n = parseInt(h.replace('#', ''), 16)
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`
 }
 
 const ICON_PATHS = {
@@ -23,6 +28,7 @@ const ICON_PATHS = {
   check:      'M20 6 9 17l-5-5',
   sparkle:    'M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z',
   launch:     'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z',
+  play:       'M8 5v14l11-7z',
 }
 
 /* ─── Feature data ────────────────────────────────────────── */
@@ -35,6 +41,24 @@ const FEATURES = [
   { icon: 'palette',  title: '8 Custom Themes',             desc: 'Choose from eight carefully crafted colour themes, from midnight dark to clean light, to match your vibe.' },
   { icon: 'message',  title: 'Team Chat',                   desc: 'Built-in messaging keeps your team connected without leaving the scheduler. Announcements, DMs, and more.' },
   { icon: 'trophy',   title: 'Kudos Wall',                  desc: 'Recognise great work publicly. Send kudos to teammates on a shared wall for everyone to celebrate.' },
+]
+
+const TESTIMONIALS = [
+  {
+    initials: 'SM', color: '#a78bfa', avatarBg: 'rgba(139,92,246,0.15)', avatarBorder: 'rgba(139,92,246,0.35)',
+    name: 'Sarah M.', role: 'Restaurant Manager', company: 'The Garden Bistro',
+    quote: 'Scheduling used to eat two hours of my Sunday. NyxGrid cut it to fifteen minutes. The drag-and-drop is so natural our shift leads now manage it themselves.',
+  },
+  {
+    initials: 'DR', color: '#67e8f9', avatarBg: 'rgba(6,182,212,0.15)', avatarBorder: 'rgba(6,182,212,0.35)',
+    name: 'Daniel R.', role: 'Clinic Operations Lead', company: 'Riverside Medical',
+    quote: "We tried three scheduling tools before this. NyxGrid is the only one staff actually checks. Real-time sync means no more 'I didn't see the update' excuses.",
+  },
+  {
+    initials: 'PK', color: '#f9a8d4', avatarBg: 'rgba(236,72,153,0.15)', avatarBorder: 'rgba(236,72,153,0.35)',
+    name: 'Priya K.', role: 'Hotel Front Office Manager', company: 'Voya Suites',
+    quote: 'The coverage alerts alone saved us twice last month. One team lead calls in, we flag the day, and staff see it instantly. Zero scramble.',
+  },
 ]
 
 const PRICING = [
@@ -99,6 +123,27 @@ export default function LandingPage() {
   const { signIn } = useAuth()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const INDUSTRIES = ['restaurants', 'clinics', 'hotels', 'retail', 'schools']
+  const [typeIdx, setTypeIdx] = useState(0)
+  const [typeFade, setTypeFade] = useState(true)
+  const [showDemo, setShowDemo] = useState(false)
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTypeFade(false)
+      setTimeout(() => { setTypeIdx(i => (i + 1) % 5); setTypeFade(true) }, 280)
+    }, 2600)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('nyx-visible') }),
+      { threshold: 0.07 }
+    )
+    document.querySelectorAll('.nyx-fade').forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
 
   async function handleSignIn() {
     setError(null)
@@ -117,6 +162,7 @@ export default function LandingPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#080810', color: '#e2e8f0', fontFamily: 'system-ui, -apple-system, sans-serif', position: 'relative' }}>
+      <style>{`.nyx-fade{opacity:0;transform:translateY(26px);transition:opacity .65s ease,transform .65s ease}.nyx-fade.nyx-visible{opacity:1;transform:none}`}</style>
       {/* dot-grid background */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
@@ -217,6 +263,13 @@ export default function LandingPage() {
             </span>
           </h1>
 
+          <div style={{ marginBottom: 16, fontSize: 14, color: '#475569', height: 22 }}>
+            Trusted by teams in{' '}
+            <span style={{ color: '#a78bfa', fontWeight: 700, opacity: typeFade ? 1 : 0, transition: 'opacity 0.28s ease', display: 'inline-block' }}>
+              {INDUSTRIES[typeIdx]}
+            </span>
+          </div>
+
           <p style={{
             fontSize: 18,
             color: '#94a3b8',
@@ -255,6 +308,20 @@ export default function LandingPage() {
             }}>
               See features →
             </a>
+            <button
+              type="button"
+              onClick={() => setShowDemo(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                fontSize: 15, padding: '14px 24px', borderRadius: 12,
+                border: '1px solid rgba(99,102,241,0.3)',
+                background: 'rgba(99,102,241,0.06)',
+                color: '#818cf8', cursor: 'pointer', fontWeight: 600,
+                transition: 'all 0.15s',
+              }}
+            >
+              <Icon d={ICON_PATHS.play} size={15} stroke="#818cf8" /> Watch Demo
+            </button>
           </div>
 
           {error && (
@@ -288,7 +355,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── APP PREVIEW MOCKUP ──────────────────────────────── */}
-      <section style={{ padding: '0 40px 80px', display: 'flex', justifyContent: 'center' }}>
+      <section className="nyx-fade" style={{ padding: '0 40px 80px', display: 'flex', justifyContent: 'center' }}>
         <div style={{
           maxWidth: 900, width: '100%',
           borderRadius: 20,
@@ -357,7 +424,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ────────────────────────────────────────── */}
-      <section id="features" style={{ padding: '80px 40px', maxWidth: 1400, margin: '0 auto' }}>
+      <section id="features" className="nyx-fade" style={{ padding: '80px 40px', maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <div style={sectionBadge}>Features</div>
           <h2 style={sectionH2}>Everything you need to run your team</h2>
@@ -409,7 +476,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ────────────────────────────────────── */}
-      <section style={{ padding: '80px 40px', maxWidth: 900, margin: '0 auto' }}>
+      <section className="nyx-fade" style={{ padding: '80px 40px', maxWidth: 900, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 56 }}>
           <div style={sectionBadge}>How It Works</div>
           <h2 style={sectionH2}>Scheduling in three steps</h2>
@@ -442,8 +509,42 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── TESTIMONIALS ────────────────────────────────────── */}
+      <section className="nyx-fade" style={{ padding: '80px 40px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <div style={sectionBadge}>Testimonials</div>
+          <h2 style={sectionH2}>Loved by teams everywhere</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          {TESTIMONIALS.map((t, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 18, padding: '28px 24px',
+              display: 'flex', flexDirection: 'column', gap: 20,
+            }}>
+              <p style={{ margin: 0, fontSize: 14, color: '#94a3b8', lineHeight: 1.8, flex: 1, fontStyle: 'italic' }}>
+                "{t.quote}"
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: t.avatarBg, border: `1px solid ${t.avatarBorder}`,
+                  color: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 800, flexShrink: 0,
+                }}>{t.initials}</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>{t.name}</div>
+                  <div style={{ fontSize: 11.5, color: '#475569' }}>{t.role} · {t.company}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ── PRICING ─────────────────────────────────────────── */}
-      <section id="pricing" style={{ padding: '80px 40px' }}>
+      <section id="pricing" className="nyx-fade" style={{ padding: '80px 40px' }}>
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <div style={sectionBadge}>Pricing</div>
           <h2 style={sectionH2}>Simple, transparent pricing</h2>
@@ -558,7 +659,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── BOTTOM CTA ──────────────────────────────────────── */}
-      <section style={{ padding: '80px 40px', textAlign: 'center' }}>
+      <section className="nyx-fade" style={{ padding: '80px 40px', textAlign: 'center' }}>
         <div style={{
           maxWidth: 620, margin: '0 auto',
           background: 'linear-gradient(160deg, rgba(139,92,246,0.12) 0%, rgba(99,102,241,0.06) 100%)',
@@ -590,6 +691,60 @@ export default function LandingPage() {
           </button>
         </div>
       </section>
+
+      {showDemo && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(4,4,12,0.88)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setShowDemo(false)}
+        >
+          <div
+            style={{ maxWidth: 900, width: '100%', background: '#0d0d1a', borderRadius: 20, border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 0 100px rgba(139,92,246,0.25), 0 40px 80px rgba(0,0,0,0.8)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: 0.8 }} />)}
+                </div>
+                <span style={{ marginLeft: 8, fontSize: 12, color: '#475569', fontWeight: 600 }}>NyxGrid — February 2026</span>
+              </div>
+              <button type="button" onClick={() => setShowDemo(false)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 18, padding: '0 4px', lineHeight: 1 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+              <div style={{ width: 48, background: 'rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 0', gap: 10, flexShrink: 0 }}>
+                {[true,false,false,false,false].map((active, i) => <div key={i} style={{ width: 30, height: 30, borderRadius: 8, background: active ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.03)', border: `1px solid ${active ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.06)'}` }} />)}
+              </div>
+              <div style={{ flex: 1, padding: 16, overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 5, marginBottom: 6 }}>
+                  {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => <div key={d} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#475569', paddingBottom: 4 }}>{d}</div>)}
+                  {MOCK_CALENDAR.map((cell, i) => (
+                    <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: 5, minHeight: 64, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div style={{ fontSize: 9, color: '#475569', fontWeight: 600 }}>{cell.day}</div>
+                      {cell.chips.map((chip, j) => <div key={j} style={{ background: chip.color, borderRadius: 3, padding: '2px 4px', fontSize: 7, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chip.name}</div>)}
+                      {cell.coverage && <div style={{ background: 'rgba(239,68,68,0.15)', border: '1px dashed rgba(239,68,68,0.5)', borderRadius: 3, padding: '2px 4px', fontSize: 7, color: '#f87171', fontWeight: 700, textAlign: 'center' }}>⚠</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ width: 120, borderLeft: '1px solid rgba(255,255,255,0.06)', padding: 10, flexShrink: 0, background: 'rgba(255,255,255,0.01)' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Roster</div>
+                {[{ name: 'Jamie R.', color: '#8b5cf6' },{ name: 'Alex T.', color: '#06b6d4' },{ name: 'Sam W.', color: '#f59e0b' },{ name: 'Chris L.', color: '#10b981' },{ name: 'Maya S.', color: '#ec4899' }].map((m, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 6px', borderRadius: 6, marginBottom: 4, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: m.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 9, fontWeight: 600, color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: 'rgba(139,92,246,0.04)' }}>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>Free to start · no credit card · live in 2 minutes</p>
+              <button type="button" onClick={() => { setShowDemo(false); handleSignIn() }} disabled={busy} style={{ ...ctaBtnStyle('#8b5cf6', busy), fontSize: 13, padding: '9px 20px' }}>
+                {busy ? 'Signing in…' : 'Try NyxGrid Free'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── FOOTER ──────────────────────────────────────────── */}
       <footer style={{

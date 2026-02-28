@@ -1,5 +1,5 @@
 ﻿import { useState, useRef, Fragment } from 'react'
-import { Plus, Trash2, X, ChevronLeft, ChevronRight, Calendar, LayoutGrid } from 'lucide-react'
+import { Plus, Trash2, X, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, Download } from 'lucide-react'
 import { useScheduler } from '../contexts/SchedulerContext'
 import { WEEK_DAYS, POSITIONS } from '../types'
 import type { WeekDay, Shift } from '../types'
@@ -139,6 +139,13 @@ function WeekView() {
           })}
         </div>
       </div>
+      {scheduledStaff.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>👥</div>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>No active staff yet</div>
+          <div style={{ fontSize: 12 }}>Add staff in the Staff tab, then assign their recurring weekly shifts here</div>
+        </div>
+      )}
       {addModal && <AddShiftModal day={addModal} onClose={() => setAddModal(null)} />}
     </>
   )
@@ -315,6 +322,14 @@ function MonthView() {
                 const isDragOver = dragOverDate === iso
                 const assignments = calendarAssignments.filter(a => a.date === iso)
                 const hasCoverage = assignments.some(a => a.staffId === 'needs-coverage')
+                const conflictIds = new Set(
+                  Object.entries(
+                    assignments.reduce((acc, a) => {
+                      if (a.staffId !== 'needs-coverage') acc[a.staffId] = (acc[a.staffId] || 0) + 1
+                      return acc
+                    }, {} as Record<string, number>)
+                  ).filter(([, v]) => v > 1).map(([k]) => k)
+                )
                 return (
                   <div
                     key={di}
@@ -363,9 +378,9 @@ function MonthView() {
                             onDragStart={e => handleChipDragStart(e, a.id, a.staffId)}
                             onDragEnd={handleDragEnd}
                             className="cal-chip"
-                            style={{ background: `rgba(${rgb}, 0.18)`, borderLeft: `3px solid ${member.color}`, color: member.color, cursor: 'grab' }}
+                            style={{ background: conflictIds.has(a.staffId) ? 'rgba(245,158,11,0.12)' : `rgba(${rgb}, 0.18)`, borderLeft: `3px solid ${conflictIds.has(a.staffId) ? '#f59e0b' : member.color}`, color: conflictIds.has(a.staffId) ? '#f59e0b' : member.color, cursor: 'grab' }}
                             onClick={() => removeCalendarAssignment(a.id)}
-                            title={`${member.name} — drag to move · click to remove`}
+                            title={`${member.name}${conflictIds.has(a.staffId) ? ' ⚠ Double-booked' : ''} — drag to move · click to remove`}
                           >
                             <span className="cal-chip-name">{member.name}</span>
                             {dayShifts.length > 0 ? (
@@ -389,31 +404,146 @@ function MonthView() {
         <div style={{ marginTop: 12, fontSize: 11.5, color: 'var(--text-muted)' }}>
           💡 Drag roster → day to add &nbsp;·&nbsp; Drag chip → day to move &nbsp;·&nbsp; Click chip to remove
         </div>
+        {!calendarAssignments.some(a => a.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)) && (
+          <div style={{ textAlign: 'center', padding: '24px 0 8px', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 28, marginBottom: 10 }}>📅</div>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>No shifts scheduled for {MONTH_NAMES[month]}</div>
+            <div style={{ fontSize: 12 }}>Drag a staff member from the roster onto any day to get started</div>
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+// --- Day View --------------------------------------------------------
+function DayView() {
+  const { staff, calendarAssignments, shifts, removeCalendarAssignment } = useScheduler()
+  const [date, setDate] = useState(() => toIso(new Date()))
+
+  const allForDate = calendarAssignments.filter(a => a.date === date)
+  const assignments = allForDate.filter(a => a.staffId !== 'needs-coverage')
+  const hasCoverage = allForDate.some(a => a.staffId === 'needs-coverage')
+  const staffCounts = assignments.reduce((acc, a) => {
+    acc[a.staffId] = (acc[a.staffId] || 0) + 1; return acc
+  }, {} as Record<string, number>)
+
+  const dateObj = new Date(date + 'T12:00:00')
+  const dow = DOW_MAP[dateObj.getDay()]
+  const todayIso = toIso(new Date())
+  const dayLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+
+  function prev() { const d = new Date(date + 'T12:00:00'); d.setDate(d.getDate() - 1); setDate(toIso(d)) }
+  function next() { const d = new Date(date + 'T12:00:00'); d.setDate(d.getDate() + 1); setDate(toIso(d)) }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+        <button className="btn-ghost" onClick={prev} style={{ padding: '6px 10px' }}><ChevronLeft size={15} /></button>
+        <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', minWidth: 200 }}>{dayLabel}</span>
+        <button className="btn-ghost" onClick={next} style={{ padding: '6px 10px' }}><ChevronRight size={15} /></button>
+        {date !== todayIso && (
+          <button className="btn-ghost" onClick={() => setDate(todayIso)} style={{ padding: '5px 12px', fontSize: 12 }}>Today</button>
+        )}
+        {hasCoverage && (
+          <span style={{ padding: '3px 12px', borderRadius: 99, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171', fontSize: 11, fontWeight: 700 }}>⚠ Needs Coverage</span>
+        )}
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>{assignments.length} staff · {dow}</span>
+      </div>
+      {assignments.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>📅</div>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>No staff scheduled for this day</div>
+          <div style={{ fontSize: 12 }}>Switch to Month view and drag staff onto a date to schedule them</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {assignments.map(a => {
+            const member = staff.find(m => m.id === a.staffId)
+            if (!member) return null
+            const rgb = hexToRgb(member.color)
+            const isConflict = (staffCounts[a.staffId] || 0) > 1
+            const memberShifts = shifts.filter(s => s.staffId === a.staffId && s.day === dow)
+            return (
+              <div key={a.id} style={{
+                background: isConflict ? 'rgba(245,158,11,0.08)' : `rgba(${rgb}, 0.08)`,
+                border: `1px solid ${isConflict ? 'rgba(245,158,11,0.4)' : `rgba(${rgb}, 0.3)`}`,
+                borderLeft: `4px solid ${isConflict ? '#f59e0b' : member.color}`,
+                borderRadius: 12, padding: '14px 18px',
+                display: 'flex', alignItems: 'center', gap: 16,
+              }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: `rgba(${rgb}, 0.2)`, border: `2px solid ${member.color}`, color: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
+                  {member.name.split(' ').map((p: string) => p[0]).join('').slice(0, 2)}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{member.name}</span>
+                    {isConflict && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 99, background: 'rgba(245,158,11,0.2)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Double Booked</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{member.role} · {member.department}</div>
+                  {memberShifts.length > 0 && (
+                    <div style={{ fontSize: 12, color: member.color, fontWeight: 600, marginTop: 3 }}>
+                      {memberShifts[0].startTime}–{memberShifts[0].endTime} · {memberShifts[0].position}
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => removeCalendarAssignment(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 6, borderRadius: 6, opacity: 0.6 }}><X size={14} /></button>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
 // --- Main Schedule Page ------------------------------------------------
 export default function Schedule() {
-  const { shifts, calendarAssignments } = useScheduler()
-  const [view, setView] = useState<'week' | 'month'>('month')
+  const { shifts, calendarAssignments, staff } = useScheduler()
+  const [view, setView] = useState<'week' | 'month' | 'day'>('month')
+
+  function downloadCSV() {
+    const rows: string[][] = [['Date','Staff','Role','Department','Start Time','End Time','Position']]
+    calendarAssignments
+      .filter(a => a.staffId !== 'needs-coverage')
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .forEach(a => {
+        const member = staff.find(m => m.id === a.staffId)
+        if (!member) return
+        const dow = DOW_MAP[new Date(a.date + 'T12:00:00').getDay()]
+        const sh = shifts.filter(s => s.staffId === a.staffId && s.day === dow)[0]
+        rows.push([a.date, member.name, member.role, member.department, sh?.startTime ?? '', sh?.endTime ?? '', sh?.position ?? ''])
+      })
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    const tag = document.createElement('a')
+    tag.href = url; tag.download = 'nyxgrid-schedule.csv'; tag.click()
+    URL.revokeObjectURL(url)
+  }
   return (
     <div className="p-6" style={{ color: 'var(--text-primary)' }}>
       <div className="flex items-center justify-between mb-5">
         <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>
-          {view === 'week' ? `${shifts.length} recurring weekly shifts` : `${calendarAssignments.length} scheduled this month`}
+          {view === 'week' ? `${shifts.length} recurring shifts` : view === 'month' ? `${calendarAssignments.length} scheduled this month` : 'Day view'}
         </p>
-        <div style={{ display: 'flex', gap: 3, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
-          <button onClick={() => setView('week')} className={view === 'week' ? 'btn-accent' : 'btn-ghost'} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', fontSize: 13, borderRadius: 7 }}>
-            <LayoutGrid size={14} /> Week
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={downloadCSV} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 12 }} title="Export CSV">
+            <Download size={13} /> Export
           </button>
-          <button onClick={() => setView('month')} className={view === 'month' ? 'btn-accent' : 'btn-ghost'} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', fontSize: 13, borderRadius: 7 }}>
-            <Calendar size={14} /> Month
-          </button>
+          <div style={{ display: 'flex', gap: 3, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
+            <button onClick={() => setView('day')} className={view === 'day' ? 'btn-accent' : 'btn-ghost'} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 13, borderRadius: 7 }}>
+              <List size={14} /> Day
+            </button>
+            <button onClick={() => setView('week')} className={view === 'week' ? 'btn-accent' : 'btn-ghost'} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 13, borderRadius: 7 }}>
+              <LayoutGrid size={14} /> Week
+            </button>
+            <button onClick={() => setView('month')} className={view === 'month' ? 'btn-accent' : 'btn-ghost'} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 13, borderRadius: 7 }}>
+              <Calendar size={14} /> Month
+            </button>
+          </div>
         </div>
       </div>
-      {view === 'week' ? <WeekView /> : <MonthView />}
+      {view === 'week' ? <WeekView /> : view === 'month' ? <MonthView /> : <DayView />}
     </div>
   )
 }

@@ -97,6 +97,7 @@ export interface StaffMember {
   email?: string
   hoursPerWeek?: number
   status: 'active' | 'inactive' | 'on-leave'
+  unavailableDays?: string[]  // WeekDay values e.g. ['Sat','Sun']
 }
 
 // ─── Shift ────────────────────────────────────────────────────

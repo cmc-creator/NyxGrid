@@ -22,6 +22,7 @@ function EditModal({ member, onClose }: EditModalProps) {
   const [email, setEmail] = useState(member?.email ?? '')
   const [status, setStatus] = useState<StaffMember['status']>(member?.status ?? 'active')
   const [hours, setHours] = useState(member?.hoursPerWeek?.toString() ?? '40')
+  const [unavailableDays, setUnavailableDays] = useState<string[]>(member?.unavailableDays ?? [])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -29,6 +30,7 @@ function EditModal({ member, onClose }: EditModalProps) {
     const data = {
       name: name.trim(), role, department, color, email,
       status, hoursPerWeek: parseInt(hours) || 40,
+      unavailableDays,
     }
     if (member) {
       updateStaff(member.id, data)
@@ -126,6 +128,29 @@ function EditModal({ member, onClose }: EditModalProps) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Availability */}
+          <div className="flex flex-col gap-2">
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Unavailable Days</label>
+            <div className="flex gap-1.5">
+              {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => setUnavailableDays(prev =>
+                    prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+                  )}
+                  className={unavailableDays.includes(day) ? 'btn-accent' : 'btn-ghost'}
+                  style={{ flex: 1, padding: '5px 0', fontSize: 10, fontWeight: 700 }}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+            {unavailableDays.length > 0 && (
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Off: {unavailableDays.join(', ')}</div>
+            )}
           </div>
 
           {/* Badge Color */}
