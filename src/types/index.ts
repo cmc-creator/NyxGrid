@@ -87,6 +87,8 @@ export const STAFF_COLORS: { id: string; hex: string; label: string }[] = [
 ]
 
 // ─── Staff Member ─────────────────────────────────────────────
+export type ContractType = 'Full-Time' | 'Part-Time' | 'Casual' | 'Zero-Hours'
+
 export interface StaffMember {
   id: string
   name: string
@@ -98,6 +100,9 @@ export interface StaffMember {
   hoursPerWeek?: number
   status: 'active' | 'inactive' | 'on-leave'
   unavailableDays?: string[]  // WeekDay values e.g. ['Sat','Sun']
+  contractType?: ContractType
+  startDate?: string          // ISO date 'YYYY-MM-DD'
+  notes?: string              // manager notes
 }
 
 // ─── Shift ────────────────────────────────────────────────────
