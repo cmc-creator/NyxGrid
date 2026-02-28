@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, X, FileText, CheckSquare } from 'lucide-react'
+import { Plus, X, FileText, CheckSquare, ChevronLeft, ChevronRight, Printer, ClipboardList } from 'lucide-react'
 import { useReception } from '../contexts/ReceptionContext'
 import { useToast } from '../contexts/ToastContext'
 import { REPORT_FIELDS, REPORT_TEMPLATES } from '../types'
@@ -11,6 +11,13 @@ export default function Reports() {
   const [newTmplName, setNewTmplName] = useState('')
   const [newTmplStart, setNewTmplStart] = useState('09:00')
   const [newTmplEnd, setNewTmplEnd] = useState('17:00')
+  const [showHandoff, setShowHandoff] = useState(false)
+
+  function shiftDate(delta: number) {
+    const d = new Date(selectedDate + 'T12:00:00')
+    d.setDate(d.getDate() + delta)
+    setSelectedDate(d.toISOString().split('T')[0])
+  }
 
   const {
     getReport, setReport,
@@ -74,16 +81,28 @@ export default function Reports() {
             Daily logs, handoff notes, incident reports, and task checklists
           </p>
         </div>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={e => setSelectedDate(e.target.value)}
-          style={{
-            background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-            color: 'var(--text-primary)', borderRadius: 8, padding: '8px 12px', fontSize: 13,
-            outline: 'none',
-          }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button onClick={() => shiftDate(-1)} className="btn-ghost" style={{ padding: '7px 10px' }} title="Previous day"><ChevronLeft size={14} /></button>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+              style={{
+                background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                color: 'var(--text-primary)', borderRadius: 8, padding: '8px 12px', fontSize: 13,
+                outline: 'none',
+              }}
+            />
+            <button onClick={() => shiftDate(1)} className="btn-ghost" style={{ padding: '7px 10px' }} title="Next day"><ChevronRight size={14} /></button>
+          </div>
+          <button onClick={() => setShowHandoff(true)} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '7px 12px' }} title="Generate handoff summary">
+            <ClipboardList size={13} /> Handoff Summary
+          </button>
+          <button onClick={() => window.print()} className="btn-ghost no-print" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '7px 12px' }} title="Print">
+            <Printer size={13} /> Print
+          </button>
+        </div>
       </div>
 
       {/* Quick templates */}
@@ -262,6 +281,42 @@ export default function Reports() {
           </button>
         </form>
       </div>
+
+      {/* Handoff Summary Modal */}
+      {showHandoff && (() => {
+        const filledFields = REPORT_FIELDS.filter(f => reportData[f.id]?.trim())
+        const lines = [
+          `=== HANDOFF SUMMARY — ${selectedDate} ===`,
+          '',
+          ...filledFields.map(f => `[ ${f.label.toUpperCase()} ]\n${reportData[f.id]}`),
+          '',
+          checklist.length > 0 ? `[ CHECKLIST ]\n${checklist.map(c => `${c.checked ? '\u2713' : '\u25a1'} ${c.text}`).join('\n')}` : '',
+        ].filter(l => l !== undefined)
+        const summaryText = lines.join('\n')
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={() => setShowHandoff(false)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-secondary)', borderRadius: 16, maxWidth: 580, width: '100%', maxHeight: '88vh', overflowY: 'auto', border: '1px solid var(--border)', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+              <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>Handoff Summary &mdash; {selectedDate}</h2>
+                <button onClick={() => setShowHandoff(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20 }}>&times;</button>
+              </div>
+              <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {filledFields.length === 0 && checklist.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No report data entered for this date.</p>
+                ) : (
+                  <textarea readOnly value={summaryText} rows={16}
+                    style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'monospace', resize: 'vertical', outline: 'none', lineHeight: 1.7, boxSizing: 'border-box' }}
+                  />
+                )}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button onClick={() => navigator.clipboard.writeText(summaryText)} className="btn-accent" style={{ fontSize: 12, padding: '8px 16px' }}>&#128203; Copy to Clipboard</button>
+                  <button onClick={() => setShowHandoff(false)} className="btn-ghost" style={{ fontSize: 12, padding: '8px 16px' }}>Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

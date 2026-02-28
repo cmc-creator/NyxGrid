@@ -17,6 +17,7 @@ interface SchedulerContextValue {
   updateStaff: (id: string, updates: Partial<StaffMember>) => void
   removeStaff: (id: string) => void
   addShift: (shift: Omit<Shift, 'id'>) => void
+  updateShift: (id: string, updates: Partial<Omit<Shift, 'id'>>) => void
   removeShift: (id: string) => void
   getStaffById: (id: string) => StaffMember | undefined
   getShiftsForStaff: (staffId: string) => Shift[]
@@ -24,6 +25,8 @@ interface SchedulerContextValue {
   addCalendarAssignment: (staffId: string, date: string) => void
   removeCalendarAssignment: (id: string) => void
   getAssignmentsForDate: (date: string) => CalendarAssignment[]
+  bulkAddCalendarAssignments: (items: Array<{ staffId: string; date: string }>) => void
+  copyWeekToNext: (weekStartIso: string) => void
 }
 
 const SchedulerContext = createContext<SchedulerContextValue | null>(null)
@@ -110,6 +113,10 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     addDoc(collection(db, 'shifts'), shift).catch(console.error)
   }
 
+  function updateShift(id: string, updates: Partial<Omit<Shift, 'id'>>) {
+    updateDoc(doc(db, 'shifts', id), updates as Record<string, unknown>).catch(console.error)
+  }
+
   function removeShift(id: string) {
     deleteDoc(doc(db, 'shifts', id)).catch(console.error)
   }
@@ -126,6 +133,31 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     deleteDoc(doc(db, 'calendarAssignments', id)).catch(console.error)
   }
 
+  function bulkAddCalendarAssignments(items: Array<{ staffId: string; date: string }>) {
+    const batch = writeBatch(db)
+    for (const item of items) {
+      if (item.staffId !== 'needs-coverage') {
+        if (calendarAssignments.some(a => a.staffId === item.staffId && a.date === item.date)) continue
+      }
+      batch.set(doc(collection(db, 'calendarAssignments')), item)
+    }
+    batch.commit().catch(console.error)
+  }
+
+  // Copy all calendar assignments from one week (Mon–Sun) to the next
+  function copyWeekToNext(weekStartIso: string) {
+    const start = new Date(weekStartIso + 'T12:00:00')
+    const items: Array<{ staffId: string; date: string }> = []
+    for (let i = 0; i < 7; i++) {
+      const srcDate = new Date(start); srcDate.setDate(start.getDate() + i)
+      const srcIso = `${srcDate.getFullYear()}-${String(srcDate.getMonth()+1).padStart(2,'0')}-${String(srcDate.getDate()).padStart(2,'0')}`
+      const dstDate = new Date(start); dstDate.setDate(start.getDate() + i + 7)
+      const dstIso = `${dstDate.getFullYear()}-${String(dstDate.getMonth()+1).padStart(2,'0')}-${String(dstDate.getDate()).padStart(2,'0')}`
+      calendarAssignments.filter(a => a.date === srcIso).forEach(a => items.push({ staffId: a.staffId, date: dstIso }))
+    }
+    if (items.length > 0) bulkAddCalendarAssignments(items)
+  }
+
   // ── Derived queries ─────────────────────────────────────────
   function getStaffById(id: string) { return staff.find(m => m.id === id) }
   function getShiftsForStaff(staffId: string) { return shifts.filter(s => s.staffId === staffId) }
@@ -136,9 +168,10 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     <SchedulerContext.Provider value={{
       staff, shifts, calendarAssignments, loading,
       addStaff, updateStaff, removeStaff,
-      addShift, removeShift,
+      addShift, updateShift, removeShift,
       getStaffById, getShiftsForStaff, getShiftsForDay,
       addCalendarAssignment, removeCalendarAssignment, getAssignmentsForDate,
+      bulkAddCalendarAssignments, copyWeekToNext,
     }}>
       {children}
     </SchedulerContext.Provider>

@@ -1,7 +1,7 @@
 ﻿import { useState, useRef, Fragment } from 'react'
-import { Plus, Trash2, X, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, Download } from 'lucide-react'
+import { Plus, Trash2, X, ChevronLeft, ChevronRight, Calendar, LayoutGrid, List, Download, Copy } from 'lucide-react'
 import { useScheduler } from '../contexts/SchedulerContext'
-import { WEEK_DAYS, POSITIONS } from '../types'
+import { WEEK_DAYS, POSITIONS, DEFAULT_SHIFT_TEMPLATES } from '../types'
 import type { WeekDay, Shift } from '../types'
 
 function hexToRgb(hex: string) {
@@ -45,13 +45,17 @@ function AddShiftModal({ day, onClose }: AddShiftModalProps) {
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('17:00')
   const [position, setPosition] = useState(POSITIONS[0])
+
+  const selectedMember = staff.find(m => m.id === staffId)
+  const isUnavailable = selectedMember?.unavailableDays?.includes(day)
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); if (!staffId) return
     addShift({ staffId, day, startTime, endTime, position }); onClose()
   }
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+      <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Add Shift &mdash; {day}</h2>
           <button className="btn-ghost" onClick={onClose} style={{ padding: 8 }}><X size={15} /></button>
@@ -60,9 +64,33 @@ function AddShiftModal({ day, onClose }: AddShiftModalProps) {
           <div className="flex flex-col gap-1">
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Staff Member</label>
             <select className="themed-input rounded-lg px-3 py-2" value={staffId} onChange={e => setStaffId(e.target.value)}>
-              {staff.filter(s => s.status === 'active').map(m => <option key={m.id} value={m.id}>{m.name} &mdash; {m.role}</option>)}
+              {staff.filter(s => s.status === 'active').map(m => <option key={m.id} value={m.id}>{m.name} — {m.role}</option>)}
             </select>
           </div>
+
+          {isUnavailable && (
+            <div style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.45)', borderRadius: 8, padding: '9px 13px', display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12 }}>
+              <span style={{ fontSize: 15 }}>⚠️</span>
+              <span style={{ color: '#fbbf24', lineHeight: 1.4 }}><strong>{selectedMember?.name}</strong> has <strong>{day}</strong> marked as a day off. You can still save, but they may not be available.</span>
+            </div>
+          )}
+
+          {/* Shift templates */}
+          <div className="flex flex-col gap-1">
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Templates</label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {DEFAULT_SHIFT_TEMPLATES.map(t => (
+                <button key={t.name} type="button" onClick={() => { setStartTime(t.start); setEndTime(t.end) }}
+                  style={{ fontSize: 11, padding: '4px 10px', borderRadius: 99, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, transition: 'all 0.15s' }}
+                  onMouseEnter={e => { (e.target as HTMLElement).style.borderColor = 'var(--accent)'; (e.target as HTMLElement).style.color = 'var(--accent)' }}
+                  onMouseLeave={e => { (e.target as HTMLElement).style.borderColor = 'var(--border)'; (e.target as HTMLElement).style.color = 'var(--text-secondary)' }}
+                >
+                  {t.name} <span style={{ opacity: 0.65 }}>{t.start}&ndash;{t.end}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start</label>
@@ -499,8 +527,19 @@ function DayView() {
 
 // --- Main Schedule Page ------------------------------------------------
 export default function Schedule() {
-  const { shifts, calendarAssignments, staff } = useScheduler()
+  const { shifts, calendarAssignments, staff, copyWeekToNext } = useScheduler()
   const [view, setView] = useState<'week' | 'month' | 'day'>('month')
+  const [copyMsg, setCopyMsg] = useState('')
+
+  function handleCopyWeek() {
+    const now = new Date()
+    const mon = new Date(now)
+    mon.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+    const iso = `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`
+    copyWeekToNext(iso)
+    setCopyMsg('Copied ✓')
+    setTimeout(() => setCopyMsg(''), 2500)
+  }
 
   function downloadCSV() {
     const rows: string[][] = [['Date','Staff','Role','Department','Start Time','End Time','Position']]
@@ -527,6 +566,9 @@ export default function Schedule() {
           {view === 'week' ? `${shifts.length} recurring shifts` : view === 'month' ? `${calendarAssignments.length} scheduled this month` : 'Day view'}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={handleCopyWeek} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 12, color: copyMsg ? '#10b981' : undefined }} title="Copy this week's assignments to next week">
+            <Copy size={13} /> {copyMsg || 'Copy Week →'}
+          </button>
           <button onClick={downloadCSV} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', fontSize: 12 }} title="Export CSV">
             <Download size={13} /> Export
           </button>

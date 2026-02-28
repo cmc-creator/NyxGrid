@@ -884,3 +884,35 @@ body {
   flex-shrink: 0;
   filter: drop-shadow(0 0 4px rgba(239,68,68,0.5));
 }
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .no-print,
+  nav, aside, header,
+  [class*="sidebar"],
+  [class*="btn-ghost"],
+  [class*="btn-accent"] {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 12pt;
+  }
+  * {
+    color: inherit !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  .themed-card, .stat-card {
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  textarea[readonly] {
+    border: 1px solid #ccc !important;
+    background: #f9f9f9 !important;
+  }
+}
