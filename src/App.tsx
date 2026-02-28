@@ -26,7 +26,7 @@ const PAGE_TITLES: Record<Page, string> = {
   dashboard: 'Dashboard',
   schedule:  'Weekly Schedule',
   staff:     'Staff Management',
-  reports:   'Shift Reports',
+  reports:   'Shift Log',
   chat:      'Team Chat',
   settings:  'Settings',
 }

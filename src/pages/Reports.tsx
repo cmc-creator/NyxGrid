@@ -68,10 +68,10 @@ export default function Reports() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 700, fontSize: 22 }}>
-            Shift Reports
+            Shift Log
           </h2>
           <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 13 }}>
-            Daily logs, handoff notes, and task checklists
+            Daily logs, handoff notes, incident reports, and task checklists
           </p>
         </div>
         <input

@@ -20,7 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: <LayoutDashboard size={18} />, label: 'Dashboard', page: 'dashboard' },
   { icon: <Calendar       size={18} />, label: 'Schedule',  page: 'schedule'  },
   { icon: <Users          size={18} />, label: 'Staff',     page: 'staff'     },
-  { icon: <FileText       size={18} />, label: 'Reports',   page: 'reports'   },
+  { icon: <FileText       size={18} />, label: 'Shift Log',  page: 'reports'   },
   { icon: <MessageSquare  size={18} />, label: 'Chat',      page: 'chat'      },
   { icon: <Settings       size={18} />, label: 'Settings',  page: 'settings'  },
 ]

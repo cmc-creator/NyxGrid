@@ -5,8 +5,8 @@ import { STAFF_COLORS } from '../types'
 import type { StaffMember } from '../types'
 import StaffBadge from '../components/StaffBadge'
 
-const DEPARTMENTS = ['Management', 'Bar', 'Kitchen', 'FOH', 'Delivery', 'Support']
-const ROLES = ['Manager', 'Supervisor', 'Barista', 'Cook', 'Line Cook', 'Server', 'Host', 'Dishwasher', 'Delivery', 'Part-time']
+const DEPARTMENTS = ['Front Desk', 'Management', 'Administration', 'Security', 'Concierge', 'Night Shift', 'Facilities']
+const ROLES = ['Receptionist', 'Senior Receptionist', 'Front Desk Agent', 'Night Auditor', 'Concierge', 'Team Lead', 'Supervisor', 'Manager', 'Admin Assistant', 'Part-time']
 
 interface EditModalProps {
   member?: StaffMember
