@@ -1,8 +1,18 @@
+import { useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
-import { Palette, Moon, Sun, Monitor } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { Palette, Moon, Sun, Monitor, Bell, BellOff, LogOut } from 'lucide-react'
 
 export default function Settings() {
   const { theme, setTheme, allThemes } = useTheme()
+  const { user, signOut } = useAuth()
+  const [chatSound, setChatSound] = useState(() => localStorage.getItem('nyx-chat-sound') !== 'off')
+
+  function toggleSound() {
+    const next = !chatSound
+    setChatSound(next)
+    localStorage.setItem('nyx-chat-sound', next ? 'on' : 'off')
+  }
 
   return (
     <div className="p-6" style={{ color: 'var(--text-primary)', maxWidth: 700 }}>
@@ -98,8 +108,8 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* Other settings placeholders */}
-      <section>
+      {/* General */}
+      <section className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <Monitor size={18} style={{ color: 'var(--accent)' }} />
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>General</h2>
@@ -115,6 +125,67 @@ export default function Settings() {
               <button className="btn-ghost" style={{ padding: '5px 12px', fontSize: 12 }}>{item.value}</button>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Notifications */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell size={18} style={{ color: 'var(--accent)' }} />
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Notifications</h2>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div style={{ fontSize: 13.5, color: 'var(--text-primary)', fontWeight: 600 }}>Chat notification sound</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>Play a sound when new chat messages arrive</div>
+            </div>
+            <button
+              type="button"
+              onClick={toggleSound}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7, padding: '7px 16px', borderRadius: 9,
+                border: '1px solid', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
+                background: chatSound ? 'var(--accent-glow)' : 'transparent',
+                borderColor: chatSound ? 'var(--accent)' : 'var(--border)',
+                color: chatSound ? 'var(--accent)' : 'var(--text-muted)',
+              }}
+            >
+              {chatSound ? <Bell size={14} /> : <BellOff size={14} />}
+              {chatSound ? 'Enabled' : 'Disabled'}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Account */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <LogOut size={18} style={{ color: 'var(--accent)' }} />
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Account</h2>
+        </div>
+        <div className="stat-card flex items-center justify-between">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%', border: '2px solid var(--accent)' }} />
+            ) : (
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent-glow)', border: '2px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: 'var(--accent)' }}>
+                {(user?.displayName ?? user?.email ?? '?')[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{user?.displayName ?? 'Unknown User'}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{user?.email}</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={signOut}
+            className="btn-ghost"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', border: '1px solid' }}
+          >
+            <LogOut size={14} /> Sign Out
+          </button>
         </div>
       </section>
     </div>

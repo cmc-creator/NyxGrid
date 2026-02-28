@@ -1,0 +1,27 @@
+{
+  "name": "NyxGrid — Universal Scheduler",
+  "short_name": "NyxGrid",
+  "description": "Real-time team scheduling for reception, hospitality, and service teams.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#8b5cf6",
+  "background_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "/gridlogo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/gridlogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "lang": "en-GB"
+}

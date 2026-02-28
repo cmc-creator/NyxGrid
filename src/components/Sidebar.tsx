@@ -14,6 +14,7 @@ interface NavItem {
 interface SidebarProps {
   activePage: string
   onNavigate: (page: string) => void
+  unreadChat?: number
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -25,7 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: <Settings       size={18} />, label: 'Settings',  page: 'settings'  },
 ]
 
-export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
+export default function Sidebar({ activePage, onNavigate, unreadChat = 0 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { triggerPanic } = useReception()
 
@@ -60,12 +61,28 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
             onClick={() => onNavigate(item.page)}
             className={`sidebar-item w-full text-left ${activePage === item.page ? 'active' : ''}`}
             title={collapsed ? item.label : undefined}
+            style={{ position: 'relative' }}
           >
             <span style={{ color: activePage === item.page ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)', flexShrink: 0 }}>
               {item.icon}
             </span>
             {!collapsed && <span>{item.label}</span>}
             {!collapsed && <span className="sidebar-indicator" />}
+            {item.page === 'chat' && unreadChat > 0 && !collapsed && (
+              <span style={{
+                marginLeft: 'auto', minWidth: 18, height: 18, borderRadius: 99,
+                background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '0 5px', flexShrink: 0, lineHeight: 1,
+              }}>{unreadChat > 99 ? '99+' : unreadChat}</span>
+            )}
+            {item.page === 'chat' && unreadChat > 0 && collapsed && (
+              <span style={{
+                position: 'absolute', top: 5, right: 5,
+                width: 7, height: 7, borderRadius: '50%',
+                background: '#ef4444',
+              }} />
+            )}
           </button>
         ))}
       </nav>

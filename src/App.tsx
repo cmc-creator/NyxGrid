@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore'
+import { db } from './firebase'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { SchedulerProvider, useScheduler } from './contexts/SchedulerContext'
@@ -38,6 +40,22 @@ function AppContent() {
   const [showThemes, setShowThemes] = useState(false)
   const [showKudos, setShowKudos] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [unreadChat, setUnreadChat] = useState(0)
+
+  // Track unread chat messages
+  useEffect(() => {
+    if (!user) return
+    if (page === 'chat') {
+      setUnreadChat(0)
+      localStorage.setItem('nyx-chat-lastread', Date.now().toString())
+      return
+    }
+    const lastMs = parseInt(localStorage.getItem('nyx-chat-lastread') ?? '0', 10)
+    const since = Timestamp.fromMillis(lastMs)
+    const q = query(collection(db, 'chatMessages'), where('createdAt', '>', since))
+    const unsub = onSnapshot(q, snap => setUnreadChat(snap.size), () => {})
+    return unsub
+  }, [page, user])
 
   useEffect(() => {
     if (!loading && !schedLoading && user && staff.length === 0 && !localStorage.getItem('nyx-onboarded')) {
@@ -86,7 +104,7 @@ function AppContent() {
 
   return (
     <div className="flex h-full" style={{ background: 'var(--bg-primary)' }}>
-      <Sidebar activePage={page} onNavigate={p => setPage(p as Page)} />
+      <Sidebar activePage={page} onNavigate={p => setPage(p as Page)} unreadChat={unreadChat} />
 
       <div className="flex flex-col flex-1 min-w-0">
         <GlobalAlertBar />

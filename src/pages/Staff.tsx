@@ -3,10 +3,11 @@ import {
   Plus, X, Search, LayoutGrid, List, ArrowUpDown,
   Mail, Phone, Clock, Calendar, FileText, ChevronDown,
   CheckCircle, Coffee, AlertCircle, Edit2,
+  Briefcase, ThumbsUp, ThumbsDown, Trash2,
 } from 'lucide-react'
 import { useScheduler } from '../contexts/SchedulerContext'
 import { STAFF_COLORS } from '../types'
-import type { StaffMember, ContractType } from '../types'
+import type { StaffMember, ContractType, LeaveRequest } from '../types'
 
 /* ─── Constants ──────────────────────────────────────────────── */
 const DEPARTMENTS   = ['Front Desk', 'Management', 'Administration', 'Security', 'Concierge', 'Night Shift', 'Facilities']
@@ -281,7 +282,7 @@ function EditModal({ member, onClose }: { member?: StaffMember; onClose: () => v
 type SortKey = 'name' | 'department' | 'role' | 'status' | 'hours'
 
 export default function Staff() {
-  const { staff, getShiftsForStaff } = useScheduler()
+  const { staff, getShiftsForStaff, leaveRequests, addLeaveRequest, updateLeaveRequest, removeLeaveRequest } = useScheduler()
   const [editTarget,    setEditTarget]    = useState<StaffMember | null>(null)
   const [showModal,     setShowModal]     = useState(false)
   const [search,        setSearch]        = useState('')
@@ -291,6 +292,24 @@ export default function Staff() {
   const [sortKey,       setSortKey]       = useState<SortKey>('name')
   const [sortAsc,       setSortAsc]       = useState(true)
   const [sortOpen,      setSortOpen]      = useState(false)
+  // Leave requests
+  const [showLeaveModal, setShowLeaveModal] = useState(false)
+  const [leaveStaffId,   setLeaveStaffId]   = useState('')
+  const [leaveStart,     setLeaveStart]     = useState('')
+  const [leaveEnd,       setLeaveEnd]       = useState('')
+  const [leaveReason,    setLeaveReason]    = useState('')
+  const [leaveTab,       setLeaveTab]       = useState<'pending' | 'all'>('pending')
+
+  function submitLeave() {
+    if (!leaveStaffId || !leaveStart || !leaveEnd) return
+    const member = staff.find(s => s.id === leaveStaffId)
+    addLeaveRequest({ staffId: leaveStaffId, startDate: leaveStart, endDate: leaveEnd, reason: leaveReason, authorName: member?.name ?? '' })
+    setShowLeaveModal(false); setLeaveStaffId(''); setLeaveStart(''); setLeaveEnd(''); setLeaveReason('')
+  }
+
+  const visibleLeave: LeaveRequest[] = leaveTab === 'pending'
+    ? leaveRequests.filter(r => r.status === 'pending')
+    : leaveRequests
 
   function getWeeklyHours(m: StaffMember) {
     return getShiftsForStaff(m.id).reduce((acc, s) => {
@@ -506,8 +525,128 @@ export default function Staff() {
         </div>
       )}
 
+      {/* ── Leave Requests ── */}
+      <section style={{ marginTop: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Briefcase size={16} style={{ color: 'var(--accent)' }} />
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Leave Requests</h2>
+            {leaveRequests.filter(r => r.status === 'pending').length > 0 && (
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}>
+                {leaveRequests.filter(r => r.status === 'pending').length} pending
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {(['pending', 'all'] as const).map(t => (
+              <button key={t} type="button" onClick={() => setLeaveTab(t)}
+                style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, border: '1px solid', background: leaveTab === t ? 'var(--accent-glow)' : 'transparent', borderColor: leaveTab === t ? 'var(--accent)' : 'var(--border)', cursor: 'pointer', color: leaveTab === t ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: leaveTab === t ? 700 : 400 }}>
+                {t === 'pending' ? 'Pending' : 'All'}
+              </button>
+            ))}
+            <button type="button" onClick={() => setShowLeaveModal(true)} className="btn-accent" style={{ fontSize: 12, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Plus size={13} /> Request Leave
+            </button>
+          </div>
+        </div>
+
+        {visibleLeave.length === 0 ? (
+          <div className="stat-card" style={{ textAlign: 'center', padding: '28px 0', color: 'var(--text-muted)', fontSize: 13 }}>
+            {leaveTab === 'pending' ? 'No pending leave requests.' : 'No leave requests yet.'}
+          </div>
+        ) : (
+          <div className="stat-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)' }}>
+                  {['Staff Member', 'Dates', 'Reason', 'Status', 'Actions'].map(h => (
+                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visibleLeave.map(r => {
+                  const member = staff.find(s => s.id === r.staffId)
+                  const statusColor = r.status === 'approved' ? '#10b981' : r.status === 'denied' ? '#ef4444' : '#f59e0b'
+                  return (
+                    <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '11px 14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {member && <div style={{ width: 28, height: 28, borderRadius: '50%', background: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{initials(member.name)}</div>}
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>{member?.name ?? r.staffId}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '11px 14px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        {new Date(r.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        {r.startDate !== r.endDate && <> – {new Date(r.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</>}
+                      </td>
+                      <td style={{ padding: '11px 14px', fontSize: 12, color: 'var(--text-muted)', maxWidth: 200 }}>{r.reason || <em style={{ opacity: 0.5 }}>No reason given</em>}</td>
+                      <td style={{ padding: '11px 14px' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44`, textTransform: 'capitalize' }}>{r.status}</span>
+                      </td>
+                      <td style={{ padding: '11px 14px' }}>
+                        <div style={{ display: 'flex', gap: 5 }}>
+                          {r.status === 'pending' && <>
+                            <button type="button" onClick={() => updateLeaveRequest(r.id, 'approved')} className="btn-ghost" style={{ padding: '4px 8px', color: '#10b981' }} title="Approve"><ThumbsUp size={13} /></button>
+                            <button type="button" onClick={() => updateLeaveRequest(r.id, 'denied')} className="btn-ghost" style={{ padding: '4px 8px', color: '#ef4444' }} title="Deny"><ThumbsDown size={13} /></button>
+                          </>}
+                          <button type="button" onClick={() => removeLeaveRequest(r.id)} className="btn-ghost" style={{ padding: '4px 8px', color: 'var(--text-muted)' }} title="Delete"><Trash2 size={13} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {showModal && (
         <EditModal member={editTarget ?? undefined} onClose={() => setShowModal(false)} />
+      )}
+
+      {/* ── Leave Request Modal ── */}
+      {showLeaveModal && (
+        <div className="modal-backdrop" onClick={() => setShowLeaveModal(false)}>
+          <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7 }}><Briefcase size={16} style={{ color: 'var(--accent)' }} /> Request Leave</h3>
+              <button type="button" onClick={() => setShowLeaveModal(false)} className="btn-ghost" style={{ padding: '4px 8px' }}><X size={16} /></button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 5 }}>Staff Member</label>
+                <select value={leaveStaffId} onChange={e => setLeaveStaffId(e.target.value)} className="input" style={{ width: '100%' }}>
+                  <option value="">Select staff member…</option>
+                  {[...staff].sort((a,b) => a.name.localeCompare(b.name)).map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 5 }}>Start Date</label>
+                  <input type="date" value={leaveStart} onChange={e => setLeaveStart(e.target.value)} className="input" style={{ width: '100%' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 5 }}>End Date</label>
+                  <input type="date" value={leaveEnd} onChange={e => setLeaveEnd(e.target.value)} min={leaveStart} className="input" style={{ width: '100%' }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 5 }}>Reason <span style={{ opacity: 0.5, fontWeight: 400 }}>(optional)</span></label>
+                <textarea value={leaveReason} onChange={e => setLeaveReason(e.target.value)} placeholder="Annual leave, medical, personal…" rows={3} className="input" style={{ width: '100%', resize: 'vertical' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+              <button type="button" onClick={() => setShowLeaveModal(false)} className="btn-ghost">Cancel</button>
+              <button type="button" onClick={submitLeave} className="btn-accent" disabled={!leaveStaffId || !leaveStart || !leaveEnd}>Submit Request</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

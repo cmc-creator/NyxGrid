@@ -2,16 +2,18 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  onSnapshot, getDocs, writeBatch,
+  onSnapshot, getDocs, writeBatch, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { SAMPLE_STAFF, SAMPLE_SHIFTS } from '../types'
-import type { StaffMember, Shift, CalendarAssignment } from '../types'
+import type { StaffMember, Shift, CalendarAssignment, Announcement, LeaveRequest } from '../types'
 
 interface SchedulerContextValue {
   staff: StaffMember[]
   shifts: Shift[]
   calendarAssignments: CalendarAssignment[]
+  announcements: Announcement[]
+  leaveRequests: LeaveRequest[]
   loading: boolean
   addStaff: (member: Omit<StaffMember, 'id'>) => void
   updateStaff: (id: string, updates: Partial<StaffMember>) => void
@@ -27,6 +29,11 @@ interface SchedulerContextValue {
   getAssignmentsForDate: (date: string) => CalendarAssignment[]
   bulkAddCalendarAssignments: (items: Array<{ staffId: string; date: string }>) => void
   copyWeekToNext: (weekStartIso: string) => void
+  addAnnouncement: (text: string, authorName: string) => void
+  removeAnnouncement: (id: string) => void
+  addLeaveRequest: (req: Omit<LeaveRequest, 'id' | 'createdAt' | 'status'>) => void
+  updateLeaveRequest: (id: string, status: LeaveRequest['status']) => void
+  removeLeaveRequest: (id: string) => void
 }
 
 const SchedulerContext = createContext<SchedulerContextValue | null>(null)
@@ -35,12 +42,16 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [shifts, setShifts] = useState<Shift[]>([])
   const [calendarAssignments, setCalendarAssignments] = useState<CalendarAssignment[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let unsubStaff: (() => void) | undefined
     let unsubShifts: (() => void) | undefined
     let unsubCal: (() => void) | undefined
+    let unsubAnn: (() => void) | undefined
+    let unsubLeave: (() => void) | undefined
 
     async function init() {
       // Seed sample data on first ever load
@@ -60,7 +71,7 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
       const loaded = new Set<string>()
       const checkLoaded = (col: string) => {
         loaded.add(col)
-        if (loaded.size >= 3) setLoading(false)
+        if (loaded.size >= 5) setLoading(false)
       }
 
       unsubStaff = onSnapshot(collection(db, 'staff'), s => {
@@ -75,6 +86,31 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
         setCalendarAssignments(s.docs.map(d => ({ id: d.id, ...d.data() } as CalendarAssignment)))
         checkLoaded('calendarAssignments')
       })
+      unsubAnn = onSnapshot(collection(db, 'announcements'), s => {
+        const list = s.docs.map(d => ({
+          id: d.id, text: d.data().text ?? '',
+          authorName: d.data().authorName ?? '',
+          pinned: d.data().pinned ?? false,
+          createdAt: d.data().createdAt?.toMillis?.() ?? Date.now(),
+        } as Announcement))
+        list.sort((a, b) => b.createdAt - a.createdAt)
+        setAnnouncements(list)
+        checkLoaded('announcements')
+      })
+      unsubLeave = onSnapshot(collection(db, 'leaveRequests'), s => {
+        const list = s.docs.map(d => ({
+          id: d.id, staffId: d.data().staffId ?? '',
+          startDate: d.data().startDate ?? '',
+          endDate: d.data().endDate ?? '',
+          reason: d.data().reason ?? '',
+          status: d.data().status ?? 'pending',
+          createdAt: d.data().createdAt?.toMillis?.() ?? Date.now(),
+          authorName: d.data().authorName,
+        } as LeaveRequest))
+        list.sort((a, b) => b.createdAt - a.createdAt)
+        setLeaveRequests(list)
+        checkLoaded('leaveRequests')
+      })
     }
 
     init().catch(err => {
@@ -86,6 +122,8 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
       unsubStaff?.()
       unsubShifts?.()
       unsubCal?.()
+      unsubAnn?.()
+      unsubLeave?.()
     }
   }, [])
 
@@ -158,6 +196,25 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
     if (items.length > 0) bulkAddCalendarAssignments(items)
   }
 
+  // ── Announcements ───────────────────────────────────────────
+  function addAnnouncement(text: string, authorName: string) {
+    addDoc(collection(db, 'announcements'), { text, authorName, pinned: false, createdAt: serverTimestamp() }).catch(console.error)
+  }
+  function removeAnnouncement(id: string) {
+    deleteDoc(doc(db, 'announcements', id)).catch(console.error)
+  }
+
+  // ── Leave Requests ──────────────────────────────────────────
+  function addLeaveRequest(req: Omit<LeaveRequest, 'id' | 'createdAt' | 'status'>) {
+    addDoc(collection(db, 'leaveRequests'), { ...req, status: 'pending', createdAt: serverTimestamp() }).catch(console.error)
+  }
+  function updateLeaveRequest(id: string, status: LeaveRequest['status']) {
+    updateDoc(doc(db, 'leaveRequests', id), { status }).catch(console.error)
+  }
+  function removeLeaveRequest(id: string) {
+    deleteDoc(doc(db, 'leaveRequests', id)).catch(console.error)
+  }
+
   // ── Derived queries ─────────────────────────────────────────
   function getStaffById(id: string) { return staff.find(m => m.id === id) }
   function getShiftsForStaff(staffId: string) { return shifts.filter(s => s.staffId === staffId) }
@@ -166,12 +223,14 @@ export function SchedulerProvider({ children }: { children: ReactNode }) {
 
   return (
     <SchedulerContext.Provider value={{
-      staff, shifts, calendarAssignments, loading,
+      staff, shifts, calendarAssignments, announcements, leaveRequests, loading,
       addStaff, updateStaff, removeStaff,
       addShift, updateShift, removeShift,
       getStaffById, getShiftsForStaff, getShiftsForDay,
       addCalendarAssignment, removeCalendarAssignment, getAssignmentsForDate,
       bulkAddCalendarAssignments, copyWeekToNext,
+      addAnnouncement, removeAnnouncement,
+      addLeaveRequest, updateLeaveRequest, removeLeaveRequest,
     }}>
       {children}
     </SchedulerContext.Provider>

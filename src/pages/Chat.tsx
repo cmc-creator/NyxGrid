@@ -41,8 +41,31 @@ export default function Chat() {
   const [username, setUsername]     = useState(() => user?.displayName?.split(' ')[0] ?? 'YOU')
   const [showDeescalation, setShowDeescalation] = useState(false)
   const [sending, setSending]       = useState(false)
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatEndRef  = useRef<HTMLDivElement>(null)
+  const prevCountRef = useRef(0)
   const [quote] = useState(() => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)])
+
+  // Play a subtle beep when someone else sends a new message
+  useEffect(() => {
+    const prev = prevCountRef.current
+    if (messages.length > prev && prev > 0) {
+      const lastMsg = messages[messages.length - 1]
+      const soundEnabled = localStorage.getItem('nyx-chat-sound') !== 'off'
+      if (soundEnabled && lastMsg.userId !== user?.uid) {
+        try {
+          const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+          const osc = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.connect(gain); gain.connect(ctx.destination)
+          osc.type = 'sine'; osc.frequency.value = 880
+          gain.gain.setValueAtTime(0.12, ctx.currentTime)
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18)
+          osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.18)
+        } catch { /* ignore AudioContext errors */ }
+      }
+    }
+    prevCountRef.current = messages.length
+  }, [messages, user?.uid])
 
   useEffect(() => {
     if (user?.displayName) setUsername(user.displayName.split(' ')[0])

@@ -126,6 +126,27 @@ export interface CalendarAssignment {
   date: string // ISO 'YYYY-MM-DD'
 }
 
+// ─── Announcement ─────────────────────────────────────────────
+export interface Announcement {
+  id: string
+  text: string
+  authorName: string
+  createdAt: number // millis
+  pinned?: boolean
+}
+
+// ─── Leave Request ────────────────────────────────────────────
+export interface LeaveRequest {
+  id: string
+  staffId: string
+  startDate: string  // ISO 'YYYY-MM-DD'
+  endDate: string    // ISO 'YYYY-MM-DD'
+  reason: string
+  status: 'pending' | 'approved' | 'denied'
+  createdAt: number  // millis
+  authorName?: string
+}
+
 // ─── Sample Data ──────────────────────────────────────────────
 export const SAMPLE_STAFF: StaffMember[] = [
   { id: 's1',  name: 'You (Manager)',    role: 'Manager',             department: 'Management', color: '#8b5cf6', status: 'active',   hoursPerWeek: 40, email: '' },

@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
-import { Users, Clock, Calendar, TrendingUp, AlertTriangle, CheckCircle, Coffee, UserMinus, Sun } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Users, Clock, TrendingUp, AlertTriangle, CheckCircle, Coffee, UserMinus, Sun, Megaphone, Send, Trash2 } from 'lucide-react'
 import { useScheduler } from '../contexts/SchedulerContext'
+import { useAuth } from '../contexts/AuthContext'
 import { WEEK_DAYS } from '../types'
 
 const DOW_MAP = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as const
@@ -34,7 +35,9 @@ function Alert({ color, icon, children }: { color: string; icon: React.ReactNode
 }
 
 export default function Dashboard() {
-  const { staff, shifts, calendarAssignments } = useScheduler()
+  const { staff, shifts, calendarAssignments, announcements, addAnnouncement, removeAnnouncement } = useScheduler()
+  const { user } = useAuth()
+  const [newAnn, setNewAnn] = useState('')
 
   const today = new Date()
   const todayIso = toIso(today)
@@ -208,6 +211,38 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Announcements */}
+      <div className="stat-card mb-4" style={{ padding: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Megaphone size={15} style={{ color: 'var(--accent)' }} />
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Team Announcements</h3>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-muted)' }}>{announcements.length} posts</span>
+        </div>
+        <form onSubmit={e => { e.preventDefault(); if (newAnn.trim()) { addAnnouncement(newAnn.trim(), user?.displayName?.split(' ')[0] ?? 'Manager'); setNewAnn('') } }} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <input value={newAnn} onChange={e => setNewAnn(e.target.value)} placeholder="Post an announcement to the team..." style={{ flex: 1, background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} />
+          <button type="submit" disabled={!newAnn.trim()} className="btn-accent" style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13 }}><Send size={13} /> Post</button>
+        </form>
+        {announcements.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-muted)', fontSize: 12 }}>No announcements yet. Post above to keep the team informed.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
+            {announcements.map(a => (
+              <div key={a.id} style={{ display: 'flex', gap: 10, padding: '10px 14px', borderRadius: 8, background: 'var(--bg-primary)', border: '1px solid var(--border)' }}>
+                <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--accent-glow)', border: '1px solid var(--accent)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>{a.authorName.slice(0,1).toUpperCase()}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase' }}>{a.authorName}</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{new Date(a.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>{a.text}</div>
+                </div>
+                <button onClick={() => removeAnnouncement(a.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, borderRadius: 4, flexShrink: 0, opacity: 0.6 }}><Trash2 size={12} /></button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
